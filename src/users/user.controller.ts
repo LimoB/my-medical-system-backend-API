@@ -13,7 +13,7 @@ export const getUsers = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  console.log('➡️ GET /api/users hit')
+  console.log('GET /api/users hit')
 
   try {
     if (req.user?.role !== 'admin') {
@@ -29,7 +29,7 @@ export const getUsers = async (
 
     res.status(200).json(users)
   } catch (error) {
-    console.error('❌ Error in getUsersController:', error)
+    console.error(' Error in getUsersController:', error)
     next(error)
   }
 }
@@ -41,7 +41,7 @@ export const getUserById = async (
   next: NextFunction
 ): Promise<void> => {
   const userId = parseInt(req.params.id, 10)
-  console.log(`➡️ GET /api/users/${req.params.id} hit`)
+  console.log(`GET /api/users/${req.params.id} hit`)
 
   if (isNaN(userId)) {
     res.status(400).json({ error: 'Invalid user ID' })
@@ -66,7 +66,7 @@ export const getUserById = async (
 
     res.status(200).json(user)
   } catch (error) {
-    console.error('❌ Error in getUserByIdController:', error)
+    console.error(' Error in getUserByIdController:', error)
     next(error)
   }
 }
@@ -78,7 +78,7 @@ export const createUser = async (
   next: NextFunction
 ): Promise<void> => {
   const userData = req.body
-  console.log('➡️ POST /api/users hit with:', userData)
+  console.log('POST /api/users hit with:', userData)
 
   if (!userData.email || !userData.password) {
     res.status(400).json({ error: 'Email and password are required' })
@@ -89,7 +89,7 @@ export const createUser = async (
     const message = await createUserService(userData)
     res.status(201).json({ message })
   } catch (error) {
-    console.error('❌ Error in createUserController:', error)
+    console.error('Error in createUserController:', error)
     next(error)
   }
 }
@@ -102,7 +102,7 @@ export const updateUser = async (
 ): Promise<void> => {
   const userId = parseInt(req.params.id, 10)
   const updates = req.body
-  console.log(`➡️ PUT /api/users/${req.params.id} hit with:`, updates)
+  console.log(`PUT /api/users/${req.params.id} hit with:`, updates)
 
   if (isNaN(userId)) {
     res.status(400).json({ error: 'Invalid user ID' })
@@ -122,7 +122,7 @@ export const updateUser = async (
     const message = await updateUserService(userId, updates)
     res.status(200).json({ message })
   } catch (error) {
-    console.error('❌ Error in updateUserController:', error)
+    console.error(' Error in updateUserController:', error)
     next(error)
   }
 }
@@ -134,7 +134,7 @@ export const deleteUser = async (
   next: NextFunction
 ): Promise<void> => {
   const userId = parseInt(req.params.id, 10)
-  console.log(`➡️ DELETE /api/users/${req.params.id} hit`)
+  console.log(`DELETE /api/users/${req.params.id} hit`)
 
   if (isNaN(userId)) {
     res.status(400).json({ error: 'Invalid user ID' })
@@ -154,7 +154,7 @@ export const deleteUser = async (
       res.status(404).json({ message: 'User not found or could not be deleted' })
     }
   } catch (error) {
-    console.error('❌ Error in deleteUserController:', error)
+    console.error(' Error in deleteUserController:', error)
     next(error)
   }
 }

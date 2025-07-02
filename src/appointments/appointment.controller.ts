@@ -13,7 +13,7 @@ export const getAppointments = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  console.log('➡️ GET /api/appointments hit')
+  console.log('GET /api/appointments hit')
 
   try {
     if (req.user?.role !== 'admin') {
@@ -29,7 +29,7 @@ export const getAppointments = async (
 
     res.status(200).json(appointments)
   } catch (error) {
-    console.error('❌ Error in getAppointmentsController:', error)
+    console.error('Error in getAppointmentsController:', error)
     next(error)
   }
 }
@@ -41,7 +41,7 @@ export const getAppointmentById = async (
   next: NextFunction
 ): Promise<void> => {
   const appointmentId = parseInt(req.params.id, 10)
-  console.log(`➡️ GET /api/appointments/${req.params.id} hit`)
+  console.log(`GET /api/appointments/${req.params.id} hit`)
 
   if (isNaN(appointmentId)) {
     res.status(400).json({ error: 'Invalid appointment ID' })
@@ -67,7 +67,7 @@ export const getAppointmentById = async (
 
     res.status(200).json(appointment)
   } catch (error) {
-    console.error('❌ Error in getAppointmentByIdController:', error)
+    console.error('Error in getAppointmentByIdController:', error)
     next(error)
   }
 }
@@ -79,7 +79,7 @@ export const createAppointment = async (
   next: NextFunction
 ): Promise<void> => {
   const appointmentData = req.body
-  console.log('➡️ POST /api/appointments hit with:', appointmentData)
+  console.log('POST /api/appointments hit with:', appointmentData)
 
   if (
     !appointmentData.user_id ||
@@ -95,7 +95,7 @@ export const createAppointment = async (
     const appointment = await createAppointmentService(appointmentData)
     res.status(201).json(appointment)
   } catch (error) {
-    console.error('❌ Error in createAppointmentController:', error)
+    console.error('Error in createAppointmentController:', error)
     next(error)
   }
 }
@@ -108,7 +108,7 @@ export const updateAppointmentStatus = async (
 ): Promise<void> => {
   const appointmentId = parseInt(req.params.id, 10)
   const { status } = req.body
-  console.log(`➡️ PUT /api/appointments/${req.params.id}/status hit with:`, status)
+  console.log(`PUT /api/appointments/${req.params.id}/status hit with:`, status)
 
   if (isNaN(appointmentId)) {
     res.status(400).json({ error: 'Invalid appointment ID' })
@@ -139,7 +139,7 @@ export const updateAppointmentStatus = async (
     const message = await updateAppointmentStatusService(appointmentId, status)
     res.status(200).json({ message })
   } catch (error) {
-    console.error('❌ Error in updateAppointmentStatusController:', error)
+    console.error('Error in updateAppointmentStatusController:', error)
     next(error)
   }
 }
@@ -151,7 +151,7 @@ export const deleteAppointment = async (
   next: NextFunction
 ): Promise<void> => {
   const appointmentId = parseInt(req.params.id, 10)
-  console.log(`➡️ DELETE /api/appointments/${req.params.id} hit`)
+  console.log(`DELETE /api/appointments/${req.params.id} hit`)
 
   if (isNaN(appointmentId)) {
     res.status(400).json({ error: 'Invalid appointment ID' })
@@ -171,7 +171,7 @@ export const deleteAppointment = async (
       res.status(404).json({ message: 'Appointment not found or could not be deleted' })
     }
   } catch (error) {
-    console.error('❌ Error in deleteAppointmentController:', error)
+    console.error('Error in deleteAppointmentController:', error)
     next(error)
   }
 }

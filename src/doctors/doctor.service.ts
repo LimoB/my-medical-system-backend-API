@@ -36,7 +36,7 @@ export const createDoctorService = async (
     try {
         const result = await db.insert(doctors).values(doctor).returning()
         if (result.length > 0) {
-            return '✅ Doctor created successfully!'
+            return 'Doctor created successfully!'
         }
         throw new Error('Doctor creation failed')
     } catch (error) {
@@ -58,7 +58,7 @@ export const updateDoctorService = async (
             .returning()
 
         if (result.length > 0) {
-            return '✅ Doctor updated successfully!'
+            return 'Doctor updated successfully!'
         }
         throw new Error('Doctor update failed or doctor not found')
     } catch (error) {

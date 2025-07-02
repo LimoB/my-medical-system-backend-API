@@ -30,13 +30,13 @@ export const resendVerificationCode = async (req: Request, res: Response): Promi
 
     const subject = "Your New Verification Code";
     const html = `
-      <p>Hello ${user.firstname},</p>
+      <p>Hello ${user.first_name},</p>
       <p>Your new email verification code is:</p>
       <h2 style="color:blue;">${newCode}</h2>
       <p>This code expires in 10 minutes.</p>
     `;
 
-    await sendHospitalEmail(user.email, user.firstname, subject, html);
+    await sendHospitalEmail(user.email, user.first_name, subject, html);
 
     res.status(200).json({
       message: "A new verification code has been sent to your email.",

@@ -13,7 +13,7 @@ export const getPrescriptions = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  console.log('➡️ GET /api/prescriptions hit')
+  console.log('GET /api/prescriptions hit')
 
   try {
     if (req.user?.role !== 'admin' && req.user?.role !== 'doctor') {
@@ -29,7 +29,7 @@ export const getPrescriptions = async (
 
     res.status(200).json(prescriptions)
   } catch (error) {
-    console.error('❌ Error in getPrescriptionsController:', error)
+    console.error('Error in getPrescriptionsController:', error)
     next(error)
   }
 }
@@ -41,7 +41,7 @@ export const getPrescriptionById = async (
   next: NextFunction
 ): Promise<void> => {
   const prescriptionId = parseInt(req.params.id, 10)
-  console.log(`➡️ GET /api/prescriptions/${req.params.id} hit`)
+  console.log(`GET /api/prescriptions/${req.params.id} hit`)
 
   if (isNaN(prescriptionId)) {
     res.status(400).json({ error: 'Invalid prescription ID' })
@@ -68,7 +68,7 @@ export const getPrescriptionById = async (
 
     res.status(200).json(prescription)
   } catch (error) {
-    console.error('❌ Error in getPrescriptionByIdController:', error)
+    console.error('Error in getPrescriptionByIdController:', error)
     next(error)
   }
 }
@@ -80,7 +80,7 @@ export const createPrescription = async (
   next: NextFunction
 ): Promise<void> => {
   const prescriptionData = req.body
-  console.log('➡️ POST /api/prescriptions hit with:', prescriptionData)
+  console.log('POST /api/prescriptions hit with:', prescriptionData)
 
   if (req.user?.role !== 'doctor') {
     res.status(403).json({ error: 'Only doctors can create prescriptions' })
@@ -91,7 +91,7 @@ export const createPrescription = async (
     const message = await createPrescriptionService(prescriptionData)
     res.status(201).json({ message })
   } catch (error) {
-    console.error('❌ Error in createPrescriptionController:', error)
+    console.error('Error in createPrescriptionController:', error)
     next(error)
   }
 }
@@ -104,7 +104,7 @@ export const updatePrescription = async (
 ): Promise<void> => {
   const prescriptionId = parseInt(req.params.id, 10)
   const updates = req.body
-  console.log(`➡️ PUT /api/prescriptions/${req.params.id} hit with:`, updates)
+  console.log(`PUT /api/prescriptions/${req.params.id} hit with:`, updates)
 
   if (isNaN(prescriptionId)) {
     res.status(400).json({ error: 'Invalid prescription ID' })
@@ -120,7 +120,7 @@ export const updatePrescription = async (
     const message = await updatePrescriptionService(prescriptionId, updates)
     res.status(200).json({ message })
   } catch (error) {
-    console.error('❌ Error in updatePrescriptionController:', error)
+    console.error('Error in updatePrescriptionController:', error)
     next(error)
   }
 }
@@ -132,7 +132,7 @@ export const deletePrescription = async (
   next: NextFunction
 ): Promise<void> => {
   const prescriptionId = parseInt(req.params.id, 10)
-  console.log(`➡️ DELETE /api/prescriptions/${req.params.id} hit`)
+  console.log(`DELETE /api/prescriptions/${req.params.id} hit`)
 
   if (isNaN(prescriptionId)) {
     res.status(400).json({ error: 'Invalid prescription ID' })
@@ -152,7 +152,7 @@ export const deletePrescription = async (
       res.status(404).json({ message: 'Prescription not found or could not be deleted' })
     }
   } catch (error) {
-    console.error('❌ Error in deletePrescriptionController:', error)
+    console.error('Error in deletePrescriptionController:', error)
     next(error)
   }
 }

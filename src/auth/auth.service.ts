@@ -99,7 +99,7 @@ export const verifyUserEmail = async (
   <p>Welcome to Medicare!</p>  <!-- Custom message inside the body, if you need it -->
 `;
 
-    await sendHospitalEmail(updatedUser.email, updatedUser.firstname, subject, html);
+    await sendHospitalEmail(updatedUser.email, updatedUser.first_name, subject, html);
 
     return { user: updatedUser, token };
 };

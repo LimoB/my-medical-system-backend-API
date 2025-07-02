@@ -13,10 +13,10 @@ export const adminCreateUser = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { firstname, lastname, email, password, role, contact_phone } = req.body;
+    const { first_name, last_name, email, password, role, contact_phone } = req.body;
 
     // Validate input
-    if (!firstname || !lastname || !email || !password || !role) {
+    if (!first_name || !last_name || !email || !password || !role) {
       res.status(400).json({ error: "All fields are required." });
       return;
     }
@@ -40,8 +40,8 @@ export const adminCreateUser = async (
 
     // Create user
     const newUser = await createUserService({
-      firstname,
-      lastname,
+      first_name,
+      last_name,
       email,
       password: hashedPassword,
       role: finalRole,
@@ -55,7 +55,7 @@ export const adminCreateUser = async (
 
     // 📧 Styled welcome email
     const html = `
-      <h2>👩‍⚕️ Welcome to Medicare, ${newUser.firstname}!</h2>
+      <h2>👩‍⚕️ Welcome to Medicare, ${newUser.first_name}!</h2>
       <p>Your account has been created by an administrator.</p>
       <p><strong>Login Credentials:</strong></p>
       <ul>
@@ -69,7 +69,7 @@ export const adminCreateUser = async (
 
     await sendHospitalEmail(
       newUser.email,
-      newUser.firstname,
+      newUser.first_name,
       "🎉 Welcome to Medicare!",
       html
     );

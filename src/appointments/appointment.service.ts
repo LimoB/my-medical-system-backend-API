@@ -8,6 +8,8 @@ export const getAllAppointmentsService = async (): Promise<TAppointmentSelect[]>
   return await db.select().from(appointments)
 }
 
+
+
 export const getAppointmentByIdService = async (
   id: number
 ): Promise<TAppointmentSelect | null> => {
@@ -17,12 +19,16 @@ export const getAppointmentByIdService = async (
   return result ?? null
 }
 
+
+
 export const createAppointmentService = async (
   data: TAppointmentInsert
 ): Promise<TAppointmentSelect> => {
   const [inserted] = await db.insert(appointments).values(data).returning()
   return inserted
 }
+
+
 
 export const updateAppointmentStatusService = async (
   id: number,
@@ -34,6 +40,8 @@ export const updateAppointmentStatusService = async (
     .where(eq(appointments.appointment_id, id))
   return 'Appointment status updated'
 }
+
+
 
 export const deleteAppointmentService = async (id: number): Promise<boolean> => {
   const deleted = await db.delete(appointments).where(eq(appointments.appointment_id, id))

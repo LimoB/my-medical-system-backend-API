@@ -53,7 +53,7 @@ export const verifyToken = (
   try {
     return jwt.verify(token, secret) as DecodedToken
   } catch (err) {
-    console.error('❌ Invalid or expired token:', err)
+    console.error('Invalid or expired token:', err)
     return null
   }
 }

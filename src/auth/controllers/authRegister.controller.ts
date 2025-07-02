@@ -20,8 +20,8 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
   try {
     const {
-      firstname,
-      lastname,
+      first_name,
+      last_name,
       email,
       password,
       contact_phone,
@@ -30,7 +30,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     } = req.body;
 
     // 🔎 Validate required fields
-    if (!firstname || !lastname || !email || !password) {
+    if (!first_name || !last_name || !email || !password) {
       res.status(400).json({
         error: "Firstname, lastname, email, and password are required.",
       });
@@ -61,8 +61,8 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
     // 🧍 Create user in DB
     const newUser = await createUserService({
-      firstname,
-      lastname,
+      first_name,
+      last_name,
       email,
       password: hashedPassword,
       contact_phone: contact_phone || null,
@@ -84,7 +84,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       <p>Please enter this code to verify your account. It expires in <strong>10 minutes</strong>.</p>
     `;
 
-    await sendHospitalEmail(email, firstname, emailSubject, emailBody, emailHeading);
+    await sendHospitalEmail(email, first_name, emailSubject, emailBody, emailHeading);
 
     // ✅ Respond to client
     res.status(201).json({

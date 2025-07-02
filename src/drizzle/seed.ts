@@ -1,5 +1,4 @@
-// drizzle/seed.ts
-import db  from './db';
+import db from './db' // your drizzle DB instance
 import {
   users,
   doctors,
@@ -7,133 +6,190 @@ import {
   prescriptions,
   payments,
   complaints,
-} from './schema';
-import { eq } from 'drizzle-orm';
+} from './schema'
+import { randomUUID } from 'crypto'
 
 async function seed() {
-  // === USERS ===
-  const insertedUsers = await db
-    .insert(users)
-    .values([
-      {
-        firstname: 'Alice',
-        lastname: 'Walker',
-        email: 'alice@example.com',
-        password: 'hashedpassword1',
-        contact_phone: '0712345678',
-        address: '123 Health St.',
-        role: 'user',
-        is_verified: true,
-      },
-      {
-        firstname: 'Bob',
-        lastname: 'Smith',
-        email: 'bob@example.com',
-        password: 'hashedpassword2',
-        contact_phone: '0798765432',
-        address: '456 Wellness Ave.',
-        role: 'admin',
-        is_verified: false,
-      },
-    ])
-    .returning();
+  // ===== DELETE EXISTING DATA =====
+  // Delete in order of foreign key dependencies to avoid constraint violations
+  await db.delete(complaints)
+  await db.delete(payments)
+  await db.delete(prescriptions)
+  await db.delete(appointments)
+  await db.delete(doctors)
+  await db.delete(users)
 
-  // === DOCTORS ===
-  const insertedDoctors = await db
-    .insert(doctors)
-    .values([
-      {
-        first_name: 'Dr. John',
-        last_name: 'Doe',
-        specialization: 'Cardiology',
-        contact_phone: '0700000001',
-        available_days: 'Mon,Tue,Fri',
-      },
-      {
-        first_name: 'Dr. Jane',
-        last_name: 'Roe',
-        specialization: 'Dermatology',
-        contact_phone: '0700000002',
-        available_days: 'Wed,Thu',
-      },
-    ])
-    .returning();
+  // ===== INSERT USERS =====
+  const insertedUsers = await db.insert(users).values([
+    {
+      first_name: 'Alice',
+      last_name: 'Anderson',
+      email: 'alice@example.com',
+      password: 'password123',
+      contact_phone: '555-0101',
+      address: '123 Main St',
+      role: 'user',
+      is_verified: true,
+    },
+    {
+      first_name: 'Dr. Bob',
+      last_name: 'Brown',
+      email: 'bob@example.com',
+      password: 'securepass',
+      contact_phone: '555-0202',
+      address: '456 Doctor St',
+      role: 'doctor',
+      is_verified: true,
+    },
+    {
+      first_name: 'Dr. Charlie',
+      last_name: 'Clark',
+      email: 'charlie@example.com',
+      password: 'anotherpass',
+      contact_phone: '555-0404',
+      address: '789 Clinic Ave',
+      role: 'doctor',
+      is_verified: true,
+    },
+    {
+      first_name: 'Dr. Dana',
+      last_name: 'Davis',
+      email: 'dana@example.com',
+      password: 'mypassword',
+      contact_phone: '555-0505',
+      address: '101 Hospital Rd',
+      role: 'doctor',
+      is_verified: true,
+    },
+    {
+      first_name: 'Admin',
+      last_name: 'Smith',
+      email: 'admin@example.com',
+      password: 'adminpass',
+      contact_phone: '555-0606',
+      address: '111 Admin Ln',
+      role: 'admin',
+      is_verified: true,
+    },
+  ]).returning()
 
-  // === APPOINTMENTS ===
- const insertedAppointments = await db
-  .insert(appointments)
-  .values([
+  // ===== INSERT DOCTORS =====
+  const insertedDoctors = await db.insert(doctors).values([
+    {
+      user_id: insertedUsers[1].user_id, // Dr. Bob
+      specialization: 'Cardiology',
+      available_days: 'Monday,Wednesday,Friday',
+    },
+    {
+      user_id: insertedUsers[2].user_id, // Dr. Charlie
+      specialization: 'Dermatology',
+      available_days: 'Tuesday,Thursday',
+    },
+    {
+      user_id: insertedUsers[3].user_id, // Dr. Dana
+      specialization: 'Pediatrics',
+      available_days: 'Monday,Tuesday,Thursday',
+    },
+  ]).returning()
+
+  // ===== INSERT APPOINTMENTS =====
+  const insertedAppointments = await db.insert(appointments).values([
     {
       user_id: insertedUsers[0].user_id,
       doctor_id: insertedDoctors[0].doctor_id,
-      appointment_date: '2025-07-01', // as string
-      time_slot: '10:00:00',
-      total_amount: '150.00',
+      appointment_date: '2025-07-10',
+      time_slot: '09:00:00',
+      total_amount: '100.00',
       appointment_status: 'Confirmed',
     },
     {
       user_id: insertedUsers[0].user_id,
       doctor_id: insertedDoctors[1].doctor_id,
-      appointment_date: '2025-07-02', // as string
+      appointment_date: '2025-07-12',
       time_slot: '14:00:00',
-      total_amount: '200.00',
+      total_amount: '120.00',
       appointment_status: 'Pending',
     },
-  ])
-  .returning();
+    {
+      user_id: insertedUsers[0].user_id,
+      doctor_id: insertedDoctors[2].doctor_id,
+      appointment_date: '2025-07-15',
+      time_slot: '10:30:00',
+      total_amount: '150.00',
+      appointment_status: 'Cancelled',
+    },
+  ]).returning()
 
-
-  // === PRESCRIPTIONS ===
+  // ===== INSERT PRESCRIPTIONS =====
   await db.insert(prescriptions).values([
     {
       appointment_id: insertedAppointments[0].appointment_id,
       doctor_id: insertedDoctors[0].doctor_id,
       patient_id: insertedUsers[0].user_id,
-      notes: 'Take 1 tablet daily',
+      notes: 'Take one tablet daily.',
     },
     {
       appointment_id: insertedAppointments[1].appointment_id,
       doctor_id: insertedDoctors[1].doctor_id,
       patient_id: insertedUsers[0].user_id,
-      notes: 'Apply cream twice a day',
+      notes: 'Apply cream twice a day.',
     },
-  ]);
+    {
+      appointment_id: insertedAppointments[2].appointment_id,
+      doctor_id: insertedDoctors[2].doctor_id,
+      patient_id: insertedUsers[0].user_id,
+      notes: 'Rest and hydrate well.',
+    },
+  ])
 
-  // === PAYMENTS ===
+  // ===== INSERT PAYMENTS =====
   await db.insert(payments).values([
     {
       appointment_id: insertedAppointments[0].appointment_id,
-      amount: '150.00',
+      amount: '100.00',
       payment_status: 'Paid',
+      transaction_id: randomUUID(),
     },
     {
       appointment_id: insertedAppointments[1].appointment_id,
-      amount: '200.00',
+      amount: '120.00',
       payment_status: 'Pending',
+      transaction_id: randomUUID(),
     },
-  ]);
+    {
+      appointment_id: insertedAppointments[2].appointment_id,
+      amount: '150.00',
+      payment_status: 'Failed',
+      transaction_id: randomUUID(),
+    },
+  ])
 
-  // === COMPLAINTS ===
+  // ===== INSERT COMPLAINTS =====
   await db.insert(complaints).values([
     {
       user_id: insertedUsers[0].user_id,
       related_appointment_id: insertedAppointments[0].appointment_id,
       subject: 'Late Appointment',
-      description: 'The doctor was late for the appointment.',
+      description: 'Doctor was 30 minutes late.',
       status: 'Open',
     },
     {
       user_id: insertedUsers[0].user_id,
       related_appointment_id: insertedAppointments[1].appointment_id,
-      subject: 'Overcharged',
-      description: 'I was charged more than expected.',
+      subject: 'Unclear Prescription',
+      description: 'Instructions were unclear.',
       status: 'In Progress',
     },
-  ]);
+    {
+      user_id: insertedUsers[0].user_id,
+      related_appointment_id: insertedAppointments[2].appointment_id,
+      subject: 'Payment Failure',
+      description: 'Payment failed despite funds.',
+      status: 'Resolved',
+    },
+  ])
 
-  console.log('✅ Seed data inserted successfully');
+  console.log('✅ Seeding complete')
 }
 
-seed().catch((err) => {
-  console.error('❌ Error seeding database:', err);
-});
+seed().catch(console.error)

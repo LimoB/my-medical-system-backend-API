@@ -18,8 +18,8 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
       token,
       user: {
         id: user.user_id,
-        firstname: user.firstname,
-        lastname: user.lastname,
+        firstname: user.first_name,
+        lastname: user.last_name,
         email: user.email,
         role: user.role,
       },

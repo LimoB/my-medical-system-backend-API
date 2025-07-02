@@ -47,7 +47,7 @@ export const createUserService = async (
   try {
     const result = await db.insert(users).values(user).returning()
     if (result.length > 0) {
-      return '✅ User created successfully!'
+      return 'User created successfully!'
     }
     throw new Error('User creation failed')
   } catch (error) {
@@ -69,7 +69,7 @@ export const updateUserService = async (
       .returning()
 
     if (result.length > 0) {
-      return '✅ User updated successfully!'
+      return 'User updated successfully!'
     }
     throw new Error('User update failed or user not found')
   } catch (error) {

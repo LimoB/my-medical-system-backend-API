@@ -22,8 +22,8 @@ export const paymentStatusEnum = pgEnum('payment_status', ['Pending', 'Paid', 'F
 // ===== USERS =====
 export const users = pgTable('users', {
   user_id: serial('user_id').primaryKey(),
-  firstname: varchar('firstname', { length: 100 }).notNull(),
-  lastname: varchar('lastname', { length: 100 }).notNull(),
+  first_name: varchar('first_name', { length: 100 }).notNull(),
+  last_name: varchar('last_name', { length: 100 }).notNull(),
   email: varchar('email', { length: 255 }).unique().notNull(),
   password: varchar('password', { length: 255 }).notNull(),
   contact_phone: varchar('contact_phone', { length: 20 }),
@@ -44,12 +44,10 @@ export const users = pgTable('users', {
 // ===== DOCTORS =====
 export const doctors = pgTable('doctors', {
   doctor_id: serial('doctor_id').primaryKey(),
-  first_name: varchar('first_name', { length: 100 }).notNull(),
-  last_name: varchar('last_name', { length: 100 }).notNull(),
+  user_id: integer('user_id').references(() => users.user_id).notNull().unique(),
   specialization: varchar('specialization', { length: 150 }).notNull(),
-  contact_phone: varchar('contact_phone', { length: 20 }),
   available_days: text('available_days'),
-  image_url: text('image_url'),
+
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
@@ -63,6 +61,7 @@ export const appointments = pgTable('appointments', {
   time_slot: time('time_slot').notNull(),
   total_amount: decimal('total_amount', { precision: 10, scale: 2 }),
   appointment_status: appointmentStatusEnum('appointment_status').default('Pending'),
+
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
@@ -75,6 +74,7 @@ export const prescriptions = pgTable('prescriptions', {
   patient_id: integer('patient_id').references(() => users.user_id).notNull(),
   notes: text('notes'),
   image_url: text('image_url'),
+
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
@@ -87,6 +87,7 @@ export const payments = pgTable('payments', {
   payment_status: paymentStatusEnum('payment_status').default('Pending'),
   transaction_id: uuid('transaction_id').defaultRandom(),
   payment_date: timestamp('payment_date', { withTimezone: true }).defaultNow(),
+
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
@@ -99,6 +100,7 @@ export const complaints = pgTable('complaints', {
   subject: varchar('subject', { length: 255 }).notNull(),
   description: text('description').notNull(),
   status: complaintStatusEnum('complaint_status').default('Open'),
+
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })

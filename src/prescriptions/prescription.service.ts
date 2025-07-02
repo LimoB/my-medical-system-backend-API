@@ -47,7 +47,7 @@ export const createPrescriptionService = async (
   try {
     const result = await db.insert(prescriptions).values(data).returning()
     if (result.length > 0) {
-      return '✅ Prescription created successfully!'
+      return 'Prescription created successfully!'
     }
     throw new Error('Prescription creation failed')
   } catch (error) {
@@ -69,7 +69,7 @@ export const updatePrescriptionService = async (
       .returning()
 
     if (result.length > 0) {
-      return '✅ Prescription updated successfully!'
+      return 'Prescription updated successfully!'
     }
     throw new Error('Prescription update failed or not found')
   } catch (error) {

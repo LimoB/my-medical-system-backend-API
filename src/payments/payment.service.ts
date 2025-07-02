@@ -36,7 +36,7 @@ export const createPaymentService = async (
   try {
     const result = await db.insert(payments).values(data).returning()
     if (result.length > 0) {
-      return '✅ Payment created successfully!'
+      return 'Payment created successfully!'
     }
     throw new Error('Payment creation failed')
   } catch (error) {
@@ -58,7 +58,7 @@ export const updatePaymentService = async (
       .returning()
 
     if (result.length > 0) {
-      return '✅ Payment updated successfully!'
+      return 'Payment updated successfully!'
     }
     throw new Error('Payment update failed or payment not found')
   } catch (error) {

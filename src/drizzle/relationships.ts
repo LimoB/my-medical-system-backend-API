@@ -9,14 +9,22 @@ import {
 } from './schema';
 
 // === USERS ===
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   appointments: many(appointments),
   prescriptions: many(prescriptions),
   complaints: many(complaints),
+  doctor: one(doctors, {
+    fields: [users.user_id],
+    references: [doctors.user_id],
+  }),
 }));
 
 // === DOCTORS ===
-export const doctorsRelations = relations(doctors, ({ many }) => ({
+export const doctorsRelations = relations(doctors, ({ one, many }) => ({
+  user: one(users, {
+    fields: [doctors.user_id],
+    references: [users.user_id],
+  }),
   appointments: many(appointments),
   prescriptions: many(prescriptions),
 }));

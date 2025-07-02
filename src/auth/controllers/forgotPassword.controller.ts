@@ -25,13 +25,13 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 
     const subject = "Reset Your Password";
     const html = `
-      <p>Hello ${user.firstname},</p>
+      <p>Hello ${user.first_name},</p>
       <p>Your password reset code is:</p>
       <h2 style="color:red;">${token}</h2>
       <p>This code expires in 10 minutes.</p>
     `;
 
-    await sendHospitalEmail(user.email, user.firstname, subject, html);
+    await sendHospitalEmail(user.email, user.first_name, subject, html);
 
     res.status(200).json({
       message: "Password reset code sent to your email.",

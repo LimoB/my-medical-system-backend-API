@@ -17,7 +17,7 @@ export const getPayments = async (
     const payments = await getPaymentsService()
     res.status(200).json(payments)
   } catch (error) {
-    console.error('❌ Error in getPayments:', error)
+    console.error('Error in getPayments:', error)
     next(error)
   }
 }
@@ -44,7 +44,7 @@ export const getPaymentById = async (
 
     res.status(200).json(payment)
   } catch (error) {
-    console.error('❌ Error in getPaymentById:', error)
+    console.error('Error in getPaymentById:', error)
     next(error)
   }
 }
@@ -59,7 +59,7 @@ export const createPayment = async (
     const message = await createPaymentService(req.body)
     res.status(201).json({ message })
   } catch (error) {
-    console.error('❌ Error in createPayment:', error)
+    console.error('Error in createPayment:', error)
     next(error)
   }
 }
@@ -81,7 +81,7 @@ export const updatePayment = async (
     const message = await updatePaymentService(paymentId, req.body)
     res.status(200).json({ message })
   } catch (error) {
-    console.error('❌ Error in updatePayment:', error)
+    console.error('Error in updatePayment:', error)
     next(error)
   }
 }
@@ -107,7 +107,7 @@ export const deletePayment = async (
       res.status(404).json({ message: 'Payment not found' })
     }
   } catch (error) {
-    console.error('❌ Error in deletePayment:', error)
+    console.error('Error in deletePayment:', error)
     next(error)
   }
 }

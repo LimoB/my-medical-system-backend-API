@@ -1,5 +1,5 @@
 import express, { Application, Request, Response } from "express";
-import cors from "cors"; // ✅ Add this line
+import cors from "cors"; // Add this line
 import { logger } from "@/middleware/logger";
 import { RateLimiterMiddleware } from "@/middleware/rateLimiter";
 import userRouter from "@/users/user.route";
