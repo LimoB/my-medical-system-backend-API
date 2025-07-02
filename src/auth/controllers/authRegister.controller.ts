@@ -16,7 +16,7 @@ type AllowedRole = typeof allowedRoles[number];
 // Controller: Create User
 // ────────────────────────────────
 export const createUser = async (req: Request, res: Response): Promise<void> => {
-  console.log("🚨 createUser called", req.body);
+  console.log("createUser called", req.body);
 
   try {
     const {
@@ -29,7 +29,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       role,
     } = req.body;
 
-    // 🔎 Validate required fields
+    // Validate required fields
     if (!first_name || !last_name || !email || !password) {
       res.status(400).json({
         error: "Firstname, lastname, email, and password are required.",
@@ -37,7 +37,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // 📧 Check if user already exists
+    // Check if user already exists
     const existingUser = await getUserByEmailService(email);
     if (existingUser) {
       res.status(400).json({
@@ -46,20 +46,20 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // 🔐 Hash password
+    //  Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 🧾 Generate verification token and expiry
+    //  Generate verification token and expiry
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // 🧑‍⚕️ Normalize and validate role
+    //  Normalize and validate role
     const normalizedRole = role?.toLowerCase?.() as AllowedRole;
     const finalRole: AllowedRole = allowedRoles.includes(normalizedRole)
       ? normalizedRole
       : "user";
 
-    // 🧍 Create user in DB
+    //  Create user in DB
     const newUser = await createUserService({
       first_name,
       last_name,
@@ -75,7 +75,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       updated_at: new Date(),
     });
 
-    // 📬 Compose and send verification email
+    // Compose and send verification email
     const emailSubject = "🩺 MediCare Health Center";
     const emailHeading = "🩺 Email Verification";
     const emailBody = `
@@ -86,13 +86,13 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
     await sendHospitalEmail(email, first_name, emailSubject, emailBody, emailHeading);
 
-    // ✅ Respond to client
+    // Respond to client
     res.status(201).json({
-      message: "✅ Registration successful. A verification email has been sent.",
+      message: " Registration successful. A verification email has been sent.",
     });
 
   } catch (error) {
-    console.error("❌ Error in createUser:", error);
+    console.error(" Error in createUser:", error);
     res.status(500).json({
       error: (error as Error).message || "Failed to register user.",
     });

@@ -24,7 +24,7 @@ export const RateLimiterMiddleware = async (
 
   // Skip rate limiting in development
   if (!isProduction) {
-    console.log(`[RateLimiter] 🛑 Skipped in dev for IP: ${ip}`);
+    console.log(`[RateLimiter] Skipped in dev for IP: ${ip}`);
     return next();
   }
 
@@ -33,7 +33,7 @@ export const RateLimiterMiddleware = async (
 
     // Optional logging in prod
     if (process.env.LOG_RATE_LIMIT === "true") {
-      console.log(`[RateLimiter] ✅ Passed for IP: ${ip}`);
+      console.log(`[RateLimiter] Passed for IP: ${ip}`);
     }
 
     next();
@@ -41,7 +41,7 @@ export const RateLimiterMiddleware = async (
     const rejRes = err as RateLimiterRes;
     const retrySecs = Math.ceil((rejRes.msBeforeNext || 0) / 1000);
 
-    console.warn(`[RateLimiter] ❌ Too many requests from IP: ${ip}`);
+    console.warn(`[RateLimiter] Too many requests from IP: ${ip}`);
 
     res.set("Retry-After", retrySecs.toString());
     res.status(429).json({

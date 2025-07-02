@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret"; // Use env var i
 const JWT_EXPIRES_IN = "1h"; // Or as required
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
-  console.log("🚨 loginUser called", req.body);
+  console.log("loginUser called", req.body);
 
   try {
     const { email, password } = req.body;
@@ -58,7 +58,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
-    console.error("❌ Error in loginUser:", error);
+    console.error("Error in loginUser:", error);
     res.status(500).json({ error: (error as Error).message || "Login failed." });
   }
 };

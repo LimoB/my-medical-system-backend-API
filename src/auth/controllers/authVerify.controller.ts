@@ -48,7 +48,7 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    console.error("❌ Error in verifyEmail:", error);
+    console.error("Error in verifyEmail:", error);
     res.status(500).json({ error: "Verification failed. Please try again." });
   }
 };

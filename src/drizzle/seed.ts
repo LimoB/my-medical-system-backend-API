@@ -189,7 +189,7 @@ async function seed() {
     },
   ])
 
-  console.log('✅ Seeding complete')
+  console.log('Seeding complete')
 }
 
 seed().catch(console.error)

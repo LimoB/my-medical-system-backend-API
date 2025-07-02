@@ -35,7 +35,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 
     res.status(200).json({ message: "Password reset successfully. You can now log in." });
   } catch (error) {
-    console.error("❌ Error in resetPassword:", error);
+    console.error("Error in resetPassword:", error);
     res.status(500).json({ error: "Failed to reset password. Please try again." });
   }
 };

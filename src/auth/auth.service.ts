@@ -76,7 +76,7 @@ export const verifyUserEmail = async (
         .where(eq(users.email, email))
         .returning();
 
-    // 🔐 JWT Token
+    //JWT Token
     const secret = process.env.JWT_SECRET;
     if (!secret) throw new Error("JWT_SECRET not configured");
 
@@ -90,7 +90,7 @@ export const verifyUserEmail = async (
         { expiresIn: "1h" }
     );
 
-    // 📧 Welcome Email
+    // Welcome Email
     const subject = "🎉 Welcome to Medicare!";
 
     const html = `

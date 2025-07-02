@@ -37,7 +37,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
       message: "Password reset code sent to your email.",
     });
   } catch (error) {
-    console.error("❌ Error in forgotPassword:", error);
+    console.error("Error in forgotPassword:", error);
     res.status(500).json({ error: "Something went wrong. Please try again later." });
   }
 };

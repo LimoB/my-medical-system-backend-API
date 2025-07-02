@@ -53,7 +53,7 @@ export const adminCreateUser = async (
       updated_at: new Date(),
     });
 
-    // 📧 Styled welcome email
+    // Styled welcome email
     const html = `
       <h2>👩‍⚕️ Welcome to Medicare, ${newUser.first_name}!</h2>
       <p>Your account has been created by an administrator.</p>

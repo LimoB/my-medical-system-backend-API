@@ -42,7 +42,7 @@ export const resendVerificationCode = async (req: Request, res: Response): Promi
       message: "A new verification code has been sent to your email.",
     });
   } catch (error) {
-    console.error("❌ Error in resendVerificationCode:", error);
+    console.error("Error in resendVerificationCode:", error);
     res.status(500).json({ error: "Failed to resend verification code. Please try again." });
   }
 };

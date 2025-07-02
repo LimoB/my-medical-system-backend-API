@@ -95,7 +95,7 @@ export const sendHospitalEmail = async (
       return 'Unknown email delivery status';
     }
   } catch (error) {
-    console.error('📧 Email sending error:', error);
+    console.error('Email sending error:', error);
     return 'Email sending failed due to server error';
   }
 };

@@ -1,25 +1,146 @@
-import express from 'express'
+import express from 'express';
 import {
   getUsers,
   getUserById,
   createUser,
   updateUser,
   deleteUser,
-} from '@/users/user.controller'
+} from '@/users/user.controller';
 
-import { adminAuth, userAuth, anyRoleAuth } from '@/middleware/bearAuth'
+import { adminAuth, anyRoleAuth } from '@/middleware/bearAuth';
 
-const userRouter = express.Router()
+const userRouter = express.Router();
 
-// Admin-only
-userRouter.get('/users', adminAuth, getUsers)
-userRouter.delete('/users/:id', adminAuth, getUserById)
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: User management endpoints
+ */
 
-// Public (signup)
-userRouter.post('/users', createUser, createUser)
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Get all users (admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of users
+ *       403:
+ *         description: Forbidden
+ */
+userRouter.get('/users', adminAuth, getUsers);
 
-// Logged-in user or admin (with ownership check in controller)
-userRouter.get('/users/:id', anyRoleAuth, getUserById)
-userRouter.put('/users/:id', anyRoleAuth, updateUser)
+/**
+ * @swagger
+ * /users:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User created
+ */
+userRouter.post('/users', createUser);
 
-export default userRouter
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     summary: Get a user by ID (admin or the user themself)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User found
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
+userRouter.get('/users/:id', anyRoleAuth, getUserById);
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   put:
+ *     summary: Update a user (admin or the user themself)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User updated
+ *       404:
+ *         description: User not found
+ */
+userRouter.put('/users/:id', anyRoleAuth, updateUser);
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   delete:
+ *     summary: Delete a user (admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: User deleted
+ *       404:
+ *         description: User not found
+ */
+userRouter.delete('/users/:id', adminAuth, deleteUser);
+
+export default userRouter;

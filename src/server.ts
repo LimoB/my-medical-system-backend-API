@@ -1,6 +1,7 @@
 import app from "@/app";
 import dotenv from "dotenv";
-import db  from "@/drizzle/db"; // adjust path if your DB instance is elsewhere
+import db from "@/drizzle/db"; // Adjust if needed
+import { setupSwagger } from "@/swagger"; // Import Swagger setup
 
 dotenv.config();
 
@@ -9,15 +10,19 @@ const PORT = process.env.PORT || 3030;
 // Check DB connection before starting server
 async function startServer() {
   try {
-    // Simple DB query to confirm connection
+    // Test database connection
     await db.execute(`SELECT 1`);
-    console.log("✅ Database connected successfully");
+    console.log("Database connected successfully");
+
+    // Setup Swagger docs
+    setupSwagger(app);
 
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Swagger docs at http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {
-    console.error("❌ Failed to connect to the database:", error);
+    console.error("Failed to connect to the database:", error);
     process.exit(1);
   }
 }
