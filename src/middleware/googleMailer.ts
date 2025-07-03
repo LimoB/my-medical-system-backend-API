@@ -14,17 +14,27 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+type UserRole = 'user' | 'doctor' | 'admin';
+
 export const sendHospitalEmail = async (
   recipientEmail: string,
-  patientName: string,
-  subject: string,        // Email subject in header
-  messageHtml: string,    // Message body (HTML)
-  heading?: string        // Optional body heading
+  recipientName: string,
+  subject: string,
+  messageHtml: string,
+  role: UserRole,
+  heading?: string
 ): Promise<string> => {
   try {
-    const emailHeading = heading ?? '🩺 MediCare Services';
+    const defaultHeadingMap: Record<UserRole, string> = {
+      doctor: '🩺 Harmony Health Clinic - Doctor Services',
+      user: '🩺 Harmony Health Clinic - Patient Services',
+      admin: '🩺 Harmony Health Clinic - Administration',
+    };
+
+    const emailHeading = heading ?? defaultHeadingMap[role] ?? '🩺 Harmony Health Clinic';
+
     const mailOptions = {
-      from: `"MediCare Services " <${process.env.EMAIL_SENDER}>`,
+      from: `"Harmony Health Clinic" <${process.env.EMAIL_SENDER}>`,
       to: recipientEmail,
       subject,
       html: `
@@ -73,11 +83,11 @@ export const sendHospitalEmail = async (
         <body>
           <div class="email-wrapper">
             <h2>${emailHeading}</h2>
-            <p>Dear ${patientName},</p>
+            
             ${messageHtml}
-            <p style="margin-top: 20px;">Thank you for choosing 🩺 MediCare Health Center.</p>
+            <p style="margin-top: 20px;">Thank you for choosing 🩺 Harmony Health Clinic.</p>
             <div class="footer">
-              &copy; ${new Date().getFullYear()} MediCare Health Center. All rights reserved.
+              &copy; ${new Date().getFullYear()} Harmony Health Clinic. All rights reserved.
             </div>
           </div>
         </body>
@@ -85,17 +95,22 @@ export const sendHospitalEmail = async (
       `,
     };
 
+    console.log(`[sendHospitalEmail] Sending email to ${recipientEmail} with subject "${subject}" and heading "${emailHeading}"`);
+
     const result = await transporter.sendMail(mailOptions);
 
     if (result.accepted.length > 0) {
-      return 'Email sent successfully from MediCare Health Center';
+      console.log(`[sendHospitalEmail] Email sent successfully to ${recipientEmail}`);
+      return 'Email sent successfully from Harmony Health Clinic';
     } else if (result.rejected.length > 0) {
+      console.warn(`[sendHospitalEmail] Email was rejected by the server for ${recipientEmail}`);
       return 'Email was rejected by the server';
     } else {
+      console.warn(`[sendHospitalEmail] Unknown email delivery status for ${recipientEmail}`);
       return 'Unknown email delivery status';
     }
   } catch (error) {
-    console.error('Email sending error:', error);
+    console.error('[sendHospitalEmail] Email sending error:', error);
     return 'Email sending failed due to server error';
   }
 };

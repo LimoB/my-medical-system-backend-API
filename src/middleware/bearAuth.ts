@@ -1,6 +1,8 @@
 import jwt, { SignOptions } from 'jsonwebtoken'
 import { Request, Response, NextFunction } from 'express'
 
+import ms, { StringValue } from 'ms'
+
 declare global {
   namespace Express {
     interface Request {
@@ -29,9 +31,10 @@ export const generateVerificationCode = (): string => {
 export const signToken = (
   payload: DecodedToken,
   secret: string,
-  expiresIn: string = '1h'
+  expiresIn: StringValue = '1h'  // Use ms.StringValue type
 ): string => {
-  const options: SignOptions = { expiresIn: expiresIn as any }
+  const options: SignOptions = { expiresIn }
+  console.log(`[signToken] Signing token for userId=${payload.userId} with expiry=${expiresIn}`)
   return jwt.sign(payload, secret, options)
 }
 
@@ -39,9 +42,10 @@ export const signToken = (
 export const signRefreshToken = (
   payload: Pick<DecodedToken, 'userId' | 'email' | 'role'>,
   secret: string,
-  expiresIn: string = '7d'
+  expiresIn: StringValue = '7d'  // Use ms.StringValue type
 ): string => {
-  const options: SignOptions = { expiresIn: expiresIn as any }
+  const options: SignOptions = { expiresIn }
+  console.log(`[signRefreshToken] Signing refresh token for userId=${payload.userId} with expiry=${expiresIn}`)
   return jwt.sign(payload, secret, options)
 }
 
@@ -51,9 +55,26 @@ export const verifyToken = (
   secret: string
 ): DecodedToken | null => {
   try {
-    return jwt.verify(token, secret) as DecodedToken
+    const decodedRaw = jwt.verify(token, secret) as any
+    console.log('[verifyToken] Raw decoded token:', decodedRaw)
+
+    // Normalize token payload keys
+    const decoded: DecodedToken = {
+      userId: decodedRaw.userId ?? decodedRaw.id?.toString() ?? '',
+      email: decodedRaw.email,
+      role: decodedRaw.role,
+      exp: decodedRaw.exp,
+    }
+
+    if (!decoded.userId || !decoded.email || !decoded.role) {
+      console.error('[verifyToken] Token missing required fields:', decodedRaw)
+      return null
+    }
+
+    console.log('[verifyToken] Normalized decoded token:', decoded)
+    return decoded
   } catch (err) {
-    console.error('Invalid or expired token:', err)
+    console.error('[verifyToken] Invalid or expired token:', err)
     return null
   }
 }
@@ -64,9 +85,25 @@ export const verifyRefreshToken = (
   secret: string
 ): DecodedToken | null => {
   try {
-    return jwt.verify(token, secret) as DecodedToken
+    const decodedRaw = jwt.verify(token, secret) as any
+    console.log('[verifyRefreshToken] Raw decoded refresh token:', decodedRaw)
+
+    const decoded: DecodedToken = {
+      userId: decodedRaw.userId ?? decodedRaw.id?.toString() ?? '',
+      email: decodedRaw.email,
+      role: decodedRaw.role,
+      exp: decodedRaw.exp,
+    }
+
+    if (!decoded.userId || !decoded.email || !decoded.role) {
+      console.error('[verifyRefreshToken] Refresh token missing required fields:', decodedRaw)
+      return null
+    }
+
+    console.log('[verifyRefreshToken] Normalized decoded refresh token:', decoded)
+    return decoded
   } catch (err) {
-    console.error('❌ Invalid or expired refresh token:', err)
+    console.error('[verifyRefreshToken] ❌ Invalid or expired refresh token:', err)
     return null
   }
 }
@@ -76,6 +113,7 @@ const authMiddlewareFactory = (allowedRoles: UserRole | UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const authHeader = req.header('Authorization')
     if (!authHeader) {
+      console.log('[authMiddleware] Authorization header is missing')
       res.status(401).json({ error: 'Authorization header is missing' })
       return
     }
@@ -83,16 +121,23 @@ const authMiddlewareFactory = (allowedRoles: UserRole | UserRole[]) => {
     const token = authHeader.startsWith('Bearer ')
       ? authHeader.slice(7)
       : authHeader
+    console.log('[authMiddleware] Extracted token:', token)
 
     const decoded = verifyToken(token, process.env.JWT_SECRET as string)
     if (!decoded) {
+      console.log('[authMiddleware] Token verification failed')
       res.status(401).json({ error: 'Invalid or expired token' })
       return
     }
 
+    console.log('[authMiddleware] Decoded token:', decoded)
+
     const { role } = decoded
     const allowed = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]
+    console.log('[authMiddleware] Allowed roles:', allowed)
+
     if (!allowed.includes(role)) {
+      console.log(`[authMiddleware] Access denied: user role '${role}' not in allowed roles`)
       res.status(403).json({ error: 'Access denied: insufficient role' })
       return
     }

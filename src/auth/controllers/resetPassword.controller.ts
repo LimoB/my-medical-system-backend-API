@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
+import bcrypt from "bcrypt";
 import {
   getUserByResetTokenService,
   resetUserPasswordService,
   saveResetTokenService,
 } from "@/auth/auth.service";
-import bcrypt from "bcrypt";
+import { sendHospitalEmail } from "@/middleware/googleMailer";
+import { getPasswordResetSuccessEmail } from "@/emails";
 
 export const resetPassword = async (req: Request, res: Response): Promise<void> => {
   const { code, newPassword } = req.body;
@@ -30,8 +32,12 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await resetUserPasswordService(user.user_id, hashedPassword);
 
-    // Optional: Invalidate token again just in case
+    // Invalidate the used token
     await saveResetTokenService(user.user_id, null, null);
+
+    // Send confirmation email
+    const { subject, body } = getPasswordResetSuccessEmail(user.first_name);
+    await sendHospitalEmail(user.email, user.first_name, subject, body, user.role);
 
     res.status(200).json({ message: "Password reset successfully. You can now log in." });
   } catch (error) {

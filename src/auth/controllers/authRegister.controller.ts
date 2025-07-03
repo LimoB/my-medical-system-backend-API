@@ -5,16 +5,44 @@ import {
   createUserService,
 } from "@/auth/auth.service";
 import { sendHospitalEmail } from "@/middleware/googleMailer";
+import {
+  getDoctorWelcomeEmail,
+  getUserWelcomeEmail,
+  getAdminWelcomeEmail,
+} from "@/emails";
 
-// ────────────────────────────────
 // Allowed Roles
-// ────────────────────────────────
 const allowedRoles = ["user", "admin", "doctor"] as const;
 type AllowedRole = typeof allowedRoles[number];
 
-// ────────────────────────────────
-// Controller: Create User
-// ────────────────────────────────
+// Helper: Send role-specific welcome email (call this after user verifies email)
+export const sendWelcomeEmail = async (
+  email: string,
+  firstName: string,
+  role: AllowedRole,
+  password?: string  // password optional for admin email
+): Promise<void> => {
+  let emailContent;
+  switch (role) {
+    case "doctor":
+      emailContent = getDoctorWelcomeEmail(firstName);
+      break;
+    case "admin":
+      if (!password) {
+        throw new Error("Password is required for admin welcome email");
+      }
+      emailContent = getAdminWelcomeEmail(firstName, password);
+      break;
+    case "user":
+    default:
+      emailContent = getUserWelcomeEmail(firstName);
+      break;
+  }
+
+  await sendHospitalEmail(email, firstName, emailContent.subject, emailContent.body, role);
+};
+
+// Controller: Create User (register)
 export const createUser = async (req: Request, res: Response): Promise<void> => {
   console.log("createUser called", req.body);
 
@@ -46,20 +74,20 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    //  Hash password
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    //  Generate verification token and expiry
+    // Generate verification code and expiry
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    //  Normalize and validate role
+    // Normalize and validate role
     const normalizedRole = role?.toLowerCase?.() as AllowedRole;
     const finalRole: AllowedRole = allowedRoles.includes(normalizedRole)
       ? normalizedRole
       : "user";
 
-    //  Create user in DB
+    // Create user in DB
     const newUser = await createUserService({
       first_name,
       last_name,
@@ -75,24 +103,24 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       updated_at: new Date(),
     });
 
-    // Compose and send verification email
-    const emailSubject = "🩺 MediCare Health Center";
-    const emailHeading = "🩺 Email Verification";
-    const emailBody = `
+    // Compose verification email
+    const verificationSubject = "🩺 Harmony Health Clinic - Email Verification";
+    const verificationBody = `
       <p>Your email verification code is:</p>
       <h2 style="color:#007BFF;">${verificationCode}</h2>
       <p>Please enter this code to verify your account. It expires in <strong>10 minutes</strong>.</p>
     `;
 
-    await sendHospitalEmail(email, first_name, emailSubject, emailBody, emailHeading);
+    // Send verification email with correct role heading
+    await sendHospitalEmail(email, first_name, verificationSubject, verificationBody, finalRole);
 
     // Respond to client
     res.status(201).json({
-      message: " Registration successful. A verification email has been sent.",
+      message: "Registration successful. A verification email has been sent.",
     });
 
   } catch (error) {
-    console.error(" Error in createUser:", error);
+    console.error("Error in createUser:", error);
     res.status(500).json({
       error: (error as Error).message || "Failed to register user.",
     });

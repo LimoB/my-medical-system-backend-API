@@ -4,12 +4,21 @@ import { appointments } from '@/drizzle/schema'
 import { eq } from 'drizzle-orm'
 import { TAppointmentInsert, TAppointmentSelect } from '@/drizzle/types'
 
+// 🔹 Get all appointments (admin use)
 export const getAllAppointmentsService = async (): Promise<TAppointmentSelect[]> => {
   return await db.select().from(appointments)
 }
 
+// 🔹 Get appointments by user ID
+export const getAppointmentsByUserIdService = async (
+  userId: number
+): Promise<TAppointmentSelect[]> => {
+  return await db.query.appointments.findMany({
+    where: eq(appointments.user_id, userId),
+  })
+}
 
-
+// 🔹 Get appointment by ID
 export const getAppointmentByIdService = async (
   id: number
 ): Promise<TAppointmentSelect | null> => {
@@ -19,8 +28,7 @@ export const getAppointmentByIdService = async (
   return result ?? null
 }
 
-
-
+// 🔹 Create appointment
 export const createAppointmentService = async (
   data: TAppointmentInsert
 ): Promise<TAppointmentSelect> => {
@@ -28,8 +36,7 @@ export const createAppointmentService = async (
   return inserted
 }
 
-
-
+// 🔹 Update status
 export const updateAppointmentStatusService = async (
   id: number,
   status: 'Pending' | 'Confirmed' | 'Cancelled'
@@ -41,9 +48,10 @@ export const updateAppointmentStatusService = async (
   return 'Appointment status updated'
 }
 
-
-
-export const deleteAppointmentService = async (id: number): Promise<boolean> => {
+// 🔹 Delete appointment
+export const deleteAppointmentService = async (
+  id: number
+): Promise<boolean> => {
   const deleted = await db.delete(appointments).where(eq(appointments.appointment_id, id))
   return (deleted?.rowCount ?? 0) > 0
 }

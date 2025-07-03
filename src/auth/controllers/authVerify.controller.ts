@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { verifyUserEmail } from "@/auth/auth.service";
+import { sendWelcomeEmail } from "@/auth/controllers/authRegister.controller"; // or wherever you put the helper
 
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   const code = req.body.verificationCode || req.body.code || req.query.code;
@@ -12,6 +13,9 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
 
   try {
     const { user, token } = await verifyUserEmail(email, code);
+
+    // Send welcome email based on role
+    await sendWelcomeEmail(user.email, user.first_name, user.role);
 
     res.status(200).json({
       message: "Email verified successfully.",

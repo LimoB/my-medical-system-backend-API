@@ -14,7 +14,7 @@ const swaggerOptions: Options = {
     },
     servers: [
       {
-        url: 'http://localhost:3030', // Update this for production
+        url: 'http://localhost:3030/api', // Update this for production
       },
     ],
     components: {

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { getUserByEmailService, updateVerificationToken } from "@/auth/auth.service";
 import { sendHospitalEmail } from "@/middleware/googleMailer";
+import { getResendVerificationEmail } from "@/emails";
 
 export const resendVerificationCode = async (req: Request, res: Response): Promise<void> => {
   const { email } = req.body;
@@ -28,15 +29,10 @@ export const resendVerificationCode = async (req: Request, res: Response): Promi
 
     await updateVerificationToken(user.email, newCode, newExpiry);
 
-    const subject = "Your New Verification Code";
-    const html = `
-      <p>Hello ${user.first_name},</p>
-      <p>Your new email verification code is:</p>
-      <h2 style="color:blue;">${newCode}</h2>
-      <p>This code expires in 10 minutes.</p>
-    `;
+    const { subject, body } = getResendVerificationEmail(user.first_name, newCode);
 
-    await sendHospitalEmail(user.email, user.first_name, subject, html);
+    // Pass role as 5th argument
+    await sendHospitalEmail(user.email, user.first_name, subject, body, user.role);
 
     res.status(200).json({
       message: "A new verification code has been sent to your email.",

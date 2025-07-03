@@ -5,6 +5,8 @@ import { setupSwagger } from "@/swagger"; // Import Swagger setup
 
 dotenv.config();
 
+console.log("JWT_SECRET:", process.env.JWT_SECRET); // <-- Add this line
+
 const PORT = process.env.PORT || 3030;
 
 // Check DB connection before starting server

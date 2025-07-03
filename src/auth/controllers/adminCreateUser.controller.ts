@@ -5,6 +5,11 @@ import {
   getUserByEmailService,
 } from "@/auth/auth.service";
 import { sendHospitalEmail } from "@/middleware/googleMailer";
+import { AdminCreateWelcomeEmail } from "@/emails";
+
+// Allowed roles array and type
+const allowedRoles = ["user", "admin", "doctor"] as const;
+type AllowedRole = typeof allowedRoles[number];
 
 // Admin creates a user (doctor, another admin, or regular user)
 export const adminCreateUser = async (
@@ -31,21 +36,20 @@ export const adminCreateUser = async (
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Validate role
-    const allowedRoles = ["user", "admin", "doctor"] as const;
-    type AllowedRole = typeof allowedRoles[number];
-    const finalRole: AllowedRole = allowedRoles.includes(role.toLowerCase() as AllowedRole)
-      ? (role.toLowerCase() as AllowedRole)
+    // Validate role and normalize
+    const normalizedRole = role.toLowerCase() as AllowedRole;
+    const finalRole: AllowedRole = allowedRoles.includes(normalizedRole)
+      ? normalizedRole
       : "user";
 
-    // Create user
+    // Create user, set is_verified true since admin created them
     const newUser = await createUserService({
       first_name,
       last_name,
       email,
       password: hashedPassword,
       role: finalRole,
-      contact_phone,
+      contact_phone: contact_phone || null,
       is_verified: true,
       verification_token: null,
       token_expiry: null,
@@ -53,25 +57,16 @@ export const adminCreateUser = async (
       updated_at: new Date(),
     });
 
-    // Styled welcome email
-    const html = `
-      <h2>👩‍⚕️ Welcome to Medicare, ${newUser.first_name}!</h2>
-      <p>Your account has been created by an administrator.</p>
-      <p><strong>Login Credentials:</strong></p>
-      <ul>
-        <li>Email: <strong>${newUser.email}</strong></li>
-        <li>Password: <strong>${password}</strong></li>
-      </ul>
-      <p>You can login here: <a href="http://localhost:5173/login">Medicare Login</a></p>
-      <p>If you have any questions, our support team is happy to help.</p>
-      <p style="margin-top: 24px;">Best regards,<br/>🩺 The Medicare Team</p>
-    `;
+    // Get styled admin welcome email content, passing password as required
+    const { subject, body } = AdminCreateWelcomeEmail(newUser.email, newUser.first_name, password);
 
+    // Send welcome email with role argument included
     await sendHospitalEmail(
       newUser.email,
       newUser.first_name,
-      "🎉 Welcome to Medicare!",
-      html
+      subject,
+      body,
+      finalRole
     );
 
     res.status(201).json({ message: "User created and welcome email sent." });

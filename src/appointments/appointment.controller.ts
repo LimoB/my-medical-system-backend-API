@@ -5,6 +5,7 @@ import {
   createAppointmentService,
   updateAppointmentStatusService,
   deleteAppointmentService,
+  getAppointmentsByUserIdService,
 } from './appointment.service'
 
 // 🔹 GET /api/appointments - Admin only
@@ -172,6 +173,36 @@ export const deleteAppointment = async (
     }
   } catch (error) {
     console.error('Error in deleteAppointmentController:', error)
+    next(error)
+  }
+}
+
+// 🔹 GET /api/appointments/me - Authenticated user (role: user only)
+export const getMyAppointments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  console.log('GET /api/appointments/me hit')
+
+  try {
+    if (req.user?.role !== 'user') {
+      res.status(403).json({ error: 'Only users can access their appointments' })
+      return
+    }
+
+    const userId = parseInt(req.user.userId, 10)
+
+    const myAppointments = await getAppointmentsByUserIdService(userId)
+
+    if (!myAppointments || myAppointments.length === 0) {
+      res.status(404).json({ message: 'No appointments found for this user' })
+      return
+    }
+
+    res.status(200).json(myAppointments)
+  } catch (error) {
+    console.error('Error in getMyAppointmentsController:', error)
     next(error)
   }
 }

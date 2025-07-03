@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3030"
+      "url": "http://localhost:3030/api"
     }
   ],
   "components": {
@@ -27,7 +27,7 @@
   "paths": {
     "/appointments": {
       "get": {
-        "summary": "Get all appointments",
+        "summary": "Get all appointments (Admin only)",
         "tags": [
           "Appointments"
         ],
@@ -38,7 +38,7 @@
         }
       },
       "post": {
-        "summary": "Create a new appointment",
+        "summary": "Create a new appointment (Authenticated users)",
         "tags": [
           "Appointments"
         ],
@@ -49,20 +49,24 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "patientName",
-                  "doctorId",
-                  "date"
+                  "user_id",
+                  "doctor_id",
+                  "appointment_date",
+                  "time_slot"
                 ],
                 "properties": {
-                  "patientName": {
-                    "type": "string"
-                  },
-                  "doctorId": {
+                  "user_id": {
                     "type": "number"
                   },
-                  "date": {
+                  "doctor_id": {
+                    "type": "number"
+                  },
+                  "appointment_date": {
                     "type": "string",
                     "format": "date"
+                  },
+                  "time_slot": {
+                    "type": "string"
                   }
                 }
               }
@@ -78,7 +82,7 @@
     },
     "/appointments/{id}": {
       "get": {
-        "summary": "Get appointment by ID",
+        "summary": "Get appointment by ID (Admin or owner)",
         "tags": [
           "Appointments"
         ],
@@ -102,7 +106,7 @@
         }
       },
       "delete": {
-        "summary": "Delete appointment by ID",
+        "summary": "Delete appointment by ID (Admin only)",
         "tags": [
           "Appointments"
         ],
@@ -117,7 +121,7 @@
           }
         ],
         "responses": {
-          "204": {
+          "200": {
             "description": "Appointment deleted successfully"
           },
           "404": {
@@ -128,7 +132,7 @@
     },
     "/appointments/{id}/status": {
       "put": {
-        "summary": "Update appointment status",
+        "summary": "Update appointment status (Admin or doctor assigned)",
         "tags": [
           "Appointments"
         ],
@@ -155,10 +159,9 @@
                   "status": {
                     "type": "string",
                     "enum": [
-                      "pending",
-                      "confirmed",
-                      "cancelled",
-                      "completed"
+                      "Pending",
+                      "Confirmed",
+                      "Cancelled"
                     ]
                   }
                 }
@@ -172,6 +175,22 @@
           },
           "404": {
             "description": "Appointment not found"
+          }
+        }
+      }
+    },
+    "/appointments/me": {
+      "get": {
+        "summary": "Get logged-in user's appointments (User only)",
+        "tags": [
+          "Appointments"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of user's appointments"
+          },
+          "403": {
+            "description": "Access denied"
           }
         }
       }
