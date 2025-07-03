@@ -32,7 +32,7 @@ const prescriptionRouter = express.Router();
  *       403:
  *         description: Forbidden
  */
-prescriptionRouter.get('/prescriptions', doctorAuth, getPrescriptions);
+prescriptionRouter.get('/prescriptions', getPrescriptions); // adminAuth, doctorAuth,
 
 /**
  * @swagger

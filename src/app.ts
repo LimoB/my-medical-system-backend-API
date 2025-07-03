@@ -8,6 +8,7 @@ import complaintsRouter from "@/complaints/complaint.route";
 import appointmentsRouter from "@/appointments/appointment.route";
 import doctorRouter from "@/doctors/doctor.route";
 import paymentRouter from "@/payments/payment.route";
+import prescriptionRouter from "./prescriptions/prescription.route";
 
 
 
@@ -44,6 +45,7 @@ app.use("/api", complaintsRouter);
 app.use("/api", appointmentsRouter);
 app.use("/api", doctorRouter);
 app.use("/api", paymentRouter);
+app.use("/api", prescriptionRouter);
 
 
 

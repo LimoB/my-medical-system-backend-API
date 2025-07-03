@@ -27,7 +27,7 @@ const doctorRouter = express.Router();
  *       200:
  *         description: List of doctors
  */
-doctorRouter.get('/doctors', getDoctors);
+doctorRouter.get('/doctors',  adminAuth, getDoctors);
 
 /**
  * @swagger
