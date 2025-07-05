@@ -7,6 +7,8 @@ import {
   deletePaymentService,
 } from '@/payments/payment.service'
 
+
+
 // GET /api/payments
 export const getPayments = async (
   req: Request,

@@ -15,6 +15,13 @@
       "when": 1751461427934,
       "tag": "0001_panoramic_maria_hill",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1751717603768,
+      "tag": "0002_needy_living_tribunal",
+      "breakpoints": true
     }
   ]
 }

@@ -8,7 +8,6 @@ import {
   getMyAppointments,
 } from './appointment.controller'
 
-// Import your auth middleware here
 import {
   adminAuth,
   userAuth,
@@ -16,6 +15,9 @@ import {
   anyRoleAuth,
   adminOrDoctorAuth,
 } from '@/middleware/bearAuth'
+
+import validate from '@/middleware/validate'
+import { newAppointmentSchema, updateAppointmentStatusSchema } from '@/validation/zodSchemas'
 
 const appointmentsRouter = express.Router()
 
@@ -108,6 +110,7 @@ appointmentsRouter.get(
 appointmentsRouter.post(
   '/appointments',
   anyRoleAuth,
+  validate(newAppointmentSchema), // ✅ Zod validation
   (req, res, next) => {
     console.log('Creating appointment by user:', req.user)
     next()
@@ -148,6 +151,7 @@ appointmentsRouter.post(
 appointmentsRouter.put(
   '/appointments/:id/status',
   adminOrDoctorAuth,
+  validate(updateAppointmentStatusSchema), // ✅ Zod validation
   (req, res, next) => {
     console.log('Updating status by user:', req.user)
     next()

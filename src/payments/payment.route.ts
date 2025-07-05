@@ -1,15 +1,19 @@
-import express from 'express';
+// src/routes/payment.routes.ts
+
+import express from 'express'
 import {
   getPayments,
   getPaymentById,
   createPayment,
   updatePayment,
   deletePayment,
-} from '@/payments/payment.controller';
+} from '@/payments/payment.controller'
 
-import { adminAuth, anyRoleAuth } from '@/middleware/bearAuth';
+import { adminAuth, anyRoleAuth } from '@/middleware/bearAuth'
+import { createCheckoutSession } from './pay.controller'
+import { handleStripeWebhook } from './webhook.controller'
 
-const paymentRouter = express.Router();
+const paymentRouter = express.Router()
 
 /**
  * @swagger
@@ -32,7 +36,7 @@ const paymentRouter = express.Router();
  *       403:
  *         description: Forbidden
  */
-paymentRouter.get('/payments', adminAuth, getPayments);
+paymentRouter.get('/payments', adminAuth, getPayments)
 
 /**
  * @swagger
@@ -54,7 +58,7 @@ paymentRouter.get('/payments', adminAuth, getPayments);
  *       404:
  *         description: Payment not found
  */
-paymentRouter.get('/payments/:id', anyRoleAuth, getPaymentById);
+paymentRouter.get('/payments/:id', anyRoleAuth, getPaymentById)
 
 /**
  * @swagger
@@ -87,7 +91,7 @@ paymentRouter.get('/payments/:id', anyRoleAuth, getPaymentById);
  *       403:
  *         description: Forbidden
  */
-paymentRouter.post('/payments', adminAuth, createPayment);
+paymentRouter.post('/payments', adminAuth, createPayment)
 
 /**
  * @swagger
@@ -122,7 +126,7 @@ paymentRouter.post('/payments', adminAuth, createPayment);
  *       404:
  *         description: Payment not found
  */
-paymentRouter.put('/payments/:id', adminAuth, updatePayment);
+paymentRouter.put('/payments/:id', adminAuth, updatePayment)
 
 /**
  * @swagger
@@ -144,6 +148,65 @@ paymentRouter.put('/payments/:id', adminAuth, updatePayment);
  *       404:
  *         description: Payment not found
  */
-paymentRouter.delete('/payments/:id', adminAuth, deletePayment);
+paymentRouter.delete('/payments/:id', adminAuth, deletePayment)
 
-export default paymentRouter;
+/**
+ * @swagger
+ * /checkout:
+ *   post:
+ *     summary: Create a Stripe checkout session
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - appointmentId
+ *             properties:
+ *               appointmentId:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Checkout session created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url:
+ *                   type: string
+ *       400:
+ *         description: Invalid input or missing data
+ *       500:
+ *         description: Internal server error
+ */
+paymentRouter.post('/checkout', anyRoleAuth, createCheckoutSession)
+
+/**
+ * @swagger
+ * /webhook:
+ *   post:
+ *     summary: Handle Stripe webhook events
+ *     tags: [Payments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Raw Stripe webhook event object
+ *     responses:
+ *       200:
+ *         description: Webhook event received and processed
+ *       400:
+ *         description: Invalid Stripe signature or event format
+ *       500:
+ *         description: Failed to record payment
+ */
+paymentRouter.post('/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook)
+
+export default paymentRouter

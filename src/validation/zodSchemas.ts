@@ -1,21 +1,22 @@
 // src/validation/zodSchemas.ts
+
 import { z } from 'zod'
 
 // ===== Enums =====
-const roleEnum = z.enum(['user', 'admin', 'doctor'])
-const appointmentStatusEnum = z.enum(['Pending', 'Confirmed', 'Cancelled'])
-const complaintStatusEnum = z.enum(['Open', 'In Progress', 'Resolved', 'Closed'])
-const paymentStatusEnum = z.enum(['Pending', 'Paid', 'Failed'])
+export const roleEnum = z.enum(['user', 'admin', 'doctor'])
+export const appointmentStatusEnum = z.enum(['Pending', 'Confirmed', 'Cancelled'])
+export const complaintStatusEnum = z.enum(['Open', 'In Progress', 'Resolved', 'Closed'])
+export const paymentStatusEnum = z.enum(['Pending', 'Paid', 'Failed'])
 
-// ===== User Schemas =====
+// ===== User Schema =====
 export const newUserSchema = z.object({
-  firstname: z.string().min(1),
-  lastname: z.string().min(1),
+  first_name: z.string().min(1),
+  last_name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(6),
   contact_phone: z.string().optional(),
   address: z.string().optional(),
-  role: roleEnum.optional(),
+  role: roleEnum.default('user').optional(),
   image_url: z.string().url().optional(),
   is_verified: z.boolean().optional(),
   verification_token: z.string().nullable().optional(),
@@ -25,12 +26,9 @@ export const newUserSchema = z.object({
 
 // ===== Doctor Schema =====
 export const newDoctorSchema = z.object({
-  first_name: z.string().min(1),
-  last_name: z.string().min(1),
+  user_id: z.number(), // required in db
   specialization: z.string().min(1),
-  contact_phone: z.string().optional(),
-  available_days: z.string().optional(), // Could be JSON stringified weekdays
-  image_url: z.string().url().optional(),
+  available_days: z.string().optional(), // assume JSON string of days
 })
 
 // ===== Appointment Schema =====
@@ -38,9 +36,16 @@ export const newAppointmentSchema = z.object({
   user_id: z.number(),
   doctor_id: z.number(),
   appointment_date: z.coerce.date(),
-  time_slot: z.string(), // format HH:MM
-  total_amount: z.coerce.number().optional(),
-  appointment_status: appointmentStatusEnum.optional(),
+  time_slot: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Time must be in HH:MM format'),
+  total_amount: z.coerce.number().positive().optional(),
+  appointment_status: appointmentStatusEnum.default('Pending').optional(),
+})
+
+// ===== Appointment Status Update Schema =====
+export const updateAppointmentStatusSchema = z.object({
+  status: appointmentStatusEnum,
 })
 
 // ===== Prescription Schema =====
@@ -56,8 +61,8 @@ export const newPrescriptionSchema = z.object({
 export const newPaymentSchema = z.object({
   appointment_id: z.number(),
   amount: z.coerce.number().positive(),
-  payment_status: paymentStatusEnum.optional(),
-  transaction_id: z.string().uuid().optional(),
+  payment_status: paymentStatusEnum.default('Pending').optional(),
+  transaction_id: z.string().min(1), // Stripe IDs are not UUIDs
   payment_date: z.coerce.date().optional(),
 })
 
@@ -67,5 +72,5 @@ export const newComplaintSchema = z.object({
   related_appointment_id: z.number().optional(),
   subject: z.string().min(1),
   description: z.string().min(1),
-  status: complaintStatusEnum.optional(),
+  status: complaintStatusEnum.default('Open').optional(),
 })

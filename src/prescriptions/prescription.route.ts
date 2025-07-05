@@ -7,7 +7,7 @@ import {
   deletePrescription,
 } from '@/prescriptions/prescription.controller';
 
-import { adminAuth, doctorAuth, anyRoleAuth } from '@/middleware/bearAuth';
+import { adminAuth, doctorAuth, anyRoleAuth, adminOrDoctorAuth } from '@/middleware/bearAuth';
 
 const prescriptionRouter = express.Router();
 
@@ -32,7 +32,7 @@ const prescriptionRouter = express.Router();
  *       403:
  *         description: Forbidden
  */
-prescriptionRouter.get('/prescriptions', getPrescriptions); // adminAuth, doctorAuth,
+prescriptionRouter.get('/prescriptions', adminOrDoctorAuth, getPrescriptions);
 
 /**
  * @swagger

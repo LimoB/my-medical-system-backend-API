@@ -985,6 +985,90 @@
         }
       }
     },
+    "/checkout": {
+      "post": {
+        "summary": "Create a Stripe checkout session",
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "appointmentId"
+                ],
+                "properties": {
+                  "appointmentId": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Checkout session created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or missing data"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/webhook": {
+      "post": {
+        "summary": "Handle Stripe webhook events",
+        "tags": [
+          "Payments"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Raw Stripe webhook event object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook event received and processed"
+          },
+          "400": {
+            "description": "Invalid Stripe signature or event format"
+          },
+          "500": {
+            "description": "Failed to record payment"
+          }
+        }
+      }
+    },
     "/prescriptions": {
       "get": {
         "summary": "Get all prescriptions (doctor only)",

@@ -82,15 +82,33 @@ export const prescriptions = pgTable('prescriptions', {
 // ===== PAYMENTS =====
 export const payments = pgTable('payments', {
   payment_id: serial('payment_id').primaryKey(),
-  appointment_id: integer('appointment_id').references(() => appointments.appointment_id).notNull(),
+
+  // Foreign key to the appointment this payment is for
+  appointment_id: integer('appointment_id')
+    .references(() => appointments.appointment_id)
+    .notNull(),
+
+  // Total amount paid
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+
+  // Enum: 'Pending' | 'Paid' | 'Failed'
   payment_status: paymentStatusEnum('payment_status').default('Pending'),
-  transaction_id: uuid('transaction_id').defaultRandom(),
+
+  /**
+   * Stripe's session ID (e.g., "cs_test_123").
+   * Changed from UUID to VARCHAR to store the real Stripe session ID.
+   * Made UNIQUE to prevent duplicate payment records.
+   */
+  transaction_id: varchar('transaction_id', { length: 255 }).notNull().unique(),
+
+  // When the payment was made
   payment_date: timestamp('payment_date', { withTimezone: true }).defaultNow(),
 
+  // Timestamps
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
+
 
 // ===== COMPLAINTS =====
 export const complaints = pgTable('complaints', {
