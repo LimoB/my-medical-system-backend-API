@@ -1,12 +1,16 @@
-import express from 'express';
+import express from "express";
 import {
   getComplaints,
   getComplaintById,
   createComplaint,
   updateComplaintStatus,
   deleteComplaint,
-} from './complaint.controller';
-import { anyRoleAuth, adminAuth } from '@/middleware/bearAuth';
+} from "./complaint.controller";
+
+import { anyRoleAuth, adminAuth } from "@/middleware/bearAuth";
+import validate from "@/middleware/validate";
+import { newComplaintSchema, complaintStatusEnum } from "@/validation/zodSchemas";
+import z from "zod";
 
 const complaintsRouter = express.Router();
 
@@ -32,12 +36,17 @@ const complaintsRouter = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - message
- *               - userId
+ *               - user_id
+ *               - subject
+ *               - description
  *             properties:
- *               message:
+ *               user_id:
+ *                 type: number
+ *               related_appointment_id:
+ *                 type: number
+ *               subject:
  *                 type: string
- *               userId:
+ *               description:
  *                 type: string
  *     responses:
  *       201:
@@ -45,7 +54,12 @@ const complaintsRouter = express.Router();
  *       401:
  *         description: Unauthorized
  */
-complaintsRouter.post('/complaints', anyRoleAuth, createComplaint);
+complaintsRouter.post(
+  "/complaints",
+  anyRoleAuth,
+  validate({ body: newComplaintSchema }),
+  createComplaint
+);
 
 /**
  * @swagger
@@ -61,7 +75,7 @@ complaintsRouter.post('/complaints', anyRoleAuth, createComplaint);
  *       403:
  *         description: Forbidden
  */
-complaintsRouter.get('/complaints', adminAuth, getComplaints);
+complaintsRouter.get("/complaints", adminAuth, getComplaints);
 
 /**
  * @swagger
@@ -83,7 +97,7 @@ complaintsRouter.get('/complaints', adminAuth, getComplaints);
  *       404:
  *         description: Complaint not found
  */
-complaintsRouter.get('/complaints/:id', adminAuth, getComplaintById);
+complaintsRouter.get("/complaints/:id", adminAuth, getComplaintById);
 
 /**
  * @swagger
@@ -110,14 +124,23 @@ complaintsRouter.get('/complaints/:id', adminAuth, getComplaintById);
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [open, resolved, rejected]
+ *                 enum: [Open, In Progress, Resolved, Closed]
  *     responses:
  *       200:
  *         description: Complaint status updated
  *       404:
  *         description: Complaint not found
  */
-complaintsRouter.put('/complaints/:id', adminAuth, updateComplaintStatus);
+complaintsRouter.put(
+  "/complaints/:id",
+  adminAuth,
+  validate({
+    body: z.object({
+      status: complaintStatusEnum,
+    }),
+  }),
+  updateComplaintStatus
+);
 
 /**
  * @swagger
@@ -139,6 +162,6 @@ complaintsRouter.put('/complaints/:id', adminAuth, updateComplaintStatus);
  *       404:
  *         description: Complaint not found
  */
-complaintsRouter.delete('/complaints/:id', adminAuth, deleteComplaint);
+complaintsRouter.delete("/complaints/:id", adminAuth, deleteComplaint);
 
 export default complaintsRouter;

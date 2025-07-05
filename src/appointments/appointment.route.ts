@@ -48,6 +48,7 @@ appointmentsRouter.get(
   getAppointments
 )
 
+
 /**
  * @swagger
  * /appointments/{id}:
@@ -110,7 +111,7 @@ appointmentsRouter.get(
 appointmentsRouter.post(
   '/appointments',
   anyRoleAuth,
-  validate(newAppointmentSchema), // ✅ Zod validation
+  validate({ body: newAppointmentSchema }),
   (req, res, next) => {
     console.log('Creating appointment by user:', req.user)
     next()
@@ -151,7 +152,7 @@ appointmentsRouter.post(
 appointmentsRouter.put(
   '/appointments/:id/status',
   adminOrDoctorAuth,
-  validate(updateAppointmentStatusSchema), // ✅ Zod validation
+  validate({ body: updateAppointmentStatusSchema }),
   (req, res, next) => {
     console.log('Updating status by user:', req.user)
     next()

@@ -7,6 +7,8 @@ import {
   deleteDoctor,
 } from './doctor.controller';
 import { adminAuth } from '@/middleware/bearAuth';
+import validate from '@/middleware/validate';
+import { newDoctorSchema } from '@/validation/zodSchemas';
 
 const doctorRouter = express.Router();
 
@@ -27,7 +29,7 @@ const doctorRouter = express.Router();
  *       200:
  *         description: List of doctors
  */
-doctorRouter.get('/doctors',  adminAuth, getDoctors);
+doctorRouter.get('/doctors', adminAuth, getDoctors);
 
 /**
  * @swagger
@@ -64,15 +66,14 @@ doctorRouter.get('/doctors/:id', getDoctorById);
  *           schema:
  *             type: object
  *             required:
- *               - name
- *               - email
+ *               - user_id
  *               - specialization
  *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
+ *               user_id:
+ *                 type: number
  *               specialization:
+ *                 type: string
+ *               available_days:
  *                 type: string
  *     responses:
  *       201:
@@ -80,7 +81,12 @@ doctorRouter.get('/doctors/:id', getDoctorById);
  *       403:
  *         description: Forbidden (admin only)
  */
-doctorRouter.post('/doctors', adminAuth, createDoctor);
+doctorRouter.post(
+  '/doctors',
+  adminAuth,
+  validate({body:newDoctorSchema}),
+  createDoctor
+);
 
 /**
  * @swagger
@@ -103,11 +109,11 @@ doctorRouter.post('/doctors', adminAuth, createDoctor);
  *           schema:
  *             type: object
  *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
+ *               user_id:
+ *                 type: number
  *               specialization:
+ *                 type: string
+ *               available_days:
  *                 type: string
  *     responses:
  *       200:
@@ -115,7 +121,12 @@ doctorRouter.post('/doctors', adminAuth, createDoctor);
  *       404:
  *         description: Doctor not found
  */
-doctorRouter.put('/doctors/:id', adminAuth, updateDoctor);
+doctorRouter.put(
+  '/doctors/:id',
+  adminAuth,
+  validate({ body:newDoctorSchema.partial()}), // all fields optional for update
+  updateDoctor
+);
 
 /**
  * @swagger

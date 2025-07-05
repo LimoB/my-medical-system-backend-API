@@ -1,5 +1,3 @@
-// src/validation/zodSchemas.ts
-
 import { z } from 'zod'
 
 // ===== Enums =====
@@ -59,11 +57,15 @@ export const newPrescriptionSchema = z.object({
 
 // ===== Payment Schema =====
 export const newPaymentSchema = z.object({
-  appointment_id: z.number(),
   amount: z.coerce.number().positive(),
-  payment_status: paymentStatusEnum.default('Pending').optional(),
-  transaction_id: z.string().min(1), // Stripe IDs are not UUIDs
-  payment_date: z.coerce.date().optional(),
+  patientId: z.string().min(1),
+  method: z.string().min(1),
+  status: paymentStatusEnum.optional(),
+})
+
+// ===== Checkout Schema =====
+export const checkoutSchema = z.object({
+  appointmentId: z.number().int().positive(),
 })
 
 // ===== Complaint Schema =====

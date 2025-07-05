@@ -1,5 +1,3 @@
-// src/routes/payment.routes.ts
-
 import express from 'express'
 import {
   getPayments,
@@ -12,6 +10,9 @@ import {
 import { adminAuth, anyRoleAuth } from '@/middleware/bearAuth'
 import { createCheckoutSession } from './pay.controller'
 import { handleStripeWebhook } from './webhook.controller'
+
+import validate from '@/middleware/validate'
+import { newPaymentSchema, checkoutSchema } from '@/validation/zodSchemas'
 
 const paymentRouter = express.Router()
 
@@ -91,7 +92,7 @@ paymentRouter.get('/payments/:id', anyRoleAuth, getPaymentById)
  *       403:
  *         description: Forbidden
  */
-paymentRouter.post('/payments', adminAuth, createPayment)
+paymentRouter.post('/payments', adminAuth, validate({body:newPaymentSchema}), createPayment)
 
 /**
  * @swagger
@@ -126,7 +127,7 @@ paymentRouter.post('/payments', adminAuth, createPayment)
  *       404:
  *         description: Payment not found
  */
-paymentRouter.put('/payments/:id', adminAuth, updatePayment)
+paymentRouter.put('/payments/:id', adminAuth, validate({body: newPaymentSchema.partial()}), updatePayment)
 
 /**
  * @swagger
@@ -184,7 +185,7 @@ paymentRouter.delete('/payments/:id', adminAuth, deletePayment)
  *       500:
  *         description: Internal server error
  */
-paymentRouter.post('/checkout', anyRoleAuth, createCheckoutSession)
+paymentRouter.post('/checkout', anyRoleAuth, validate({body:checkoutSchema}), createCheckoutSession)
 
 /**
  * @swagger

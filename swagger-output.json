@@ -490,14 +490,21 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "message",
-                  "userId"
+                  "user_id",
+                  "subject",
+                  "description"
                 ],
                 "properties": {
-                  "message": {
+                  "user_id": {
+                    "type": "number"
+                  },
+                  "related_appointment_id": {
+                    "type": "number"
+                  },
+                  "subject": {
                     "type": "string"
                   },
-                  "userId": {
+                  "description": {
                     "type": "string"
                   }
                 }
@@ -597,9 +604,10 @@
                   "status": {
                     "type": "string",
                     "enum": [
-                      "open",
-                      "resolved",
-                      "rejected"
+                      "Open",
+                      "In Progress",
+                      "Resolved",
+                      "Closed"
                     ]
                   }
                 }

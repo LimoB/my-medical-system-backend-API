@@ -8,6 +8,8 @@ import {
 } from '@/prescriptions/prescription.controller';
 
 import { adminAuth, doctorAuth, anyRoleAuth, adminOrDoctorAuth } from '@/middleware/bearAuth';
+import validate from '@/middleware/validate';
+import { newPrescriptionSchema } from '@/validation/zodSchemas';
 
 const prescriptionRouter = express.Router();
 
@@ -89,7 +91,7 @@ prescriptionRouter.get('/prescriptions/:id', anyRoleAuth, getPrescriptionById);
  *       403:
  *         description: Forbidden
  */
-prescriptionRouter.post('/prescriptions', doctorAuth, createPrescription);
+prescriptionRouter.post('/prescriptions', doctorAuth, validate({body:newPrescriptionSchema}), createPrescription);
 
 /**
  * @swagger
@@ -122,7 +124,7 @@ prescriptionRouter.post('/prescriptions', doctorAuth, createPrescription);
  *       404:
  *         description: Prescription not found
  */
-prescriptionRouter.put('/prescriptions/:id', doctorAuth, updatePrescription);
+prescriptionRouter.put('/prescriptions/:id', doctorAuth, validate({body:newPrescriptionSchema.partial()}), updatePrescription);
 
 /**
  * @swagger

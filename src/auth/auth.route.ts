@@ -8,6 +8,16 @@ import { resendVerificationCode } from "@/auth/controllers/resendCode.controller
 import { adminCreateUser } from "@/auth/controllers/adminCreateUser.controller";
 
 import { onlyAdmin } from "@/middleware/adminOnly";
+import validate from "@/middleware/validate";
+import {
+  registerSchema,
+  loginSchema,
+  verifyEmailSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  resendCodeSchema,
+  adminCreateUserSchema,
+} from "@/validation/authSchemas";
 
 const authRouter = Router();
 
@@ -47,7 +57,7 @@ const authRouter = Router();
  *       400:
  *         description: Invalid input or user already exists
  */
-authRouter.post("/auth/register", createUser);
+authRouter.post("/auth/register", validate({body: registerSchema}), createUser);
 
 /**
  * @swagger
@@ -75,7 +85,7 @@ authRouter.post("/auth/register", createUser);
  *       401:
  *         description: Invalid credentials
  */
-authRouter.post("/auth/login", loginUser);
+authRouter.post("/auth/login", validate({body:loginSchema}), loginUser);
 
 /**
  * @swagger
@@ -103,7 +113,7 @@ authRouter.post("/auth/login", loginUser);
  *       400:
  *         description: Invalid code or email
  */
-authRouter.post("/auth/verify-email", verifyEmail);
+authRouter.post("/auth/verify-email", validate({body:  verifyEmailSchema}), verifyEmail);
 
 /**
  * @swagger
@@ -128,7 +138,7 @@ authRouter.post("/auth/verify-email", verifyEmail);
  *       404:
  *         description: Email not found
  */
-authRouter.post("/auth/forgot-password", forgotPassword);
+authRouter.post("/auth/forgot-password", validate({ body: forgotPasswordSchema}), forgotPassword);
 
 /**
  * @swagger
@@ -159,7 +169,7 @@ authRouter.post("/auth/forgot-password", forgotPassword);
  *       400:
  *         description: Invalid code or email
  */
-authRouter.post("/auth/reset-password", resetPassword);
+authRouter.post("/auth/reset-password", validate({body: resetPasswordSchema}), resetPassword);
 
 /**
  * @swagger
@@ -182,7 +192,7 @@ authRouter.post("/auth/reset-password", resetPassword);
  *       200:
  *         description: Code resent
  */
-authRouter.post("/auth/resend-code", resendVerificationCode);
+authRouter.post("/auth/resend-code", validate({body:resendCodeSchema}), resendVerificationCode);
 
 /**
  * @swagger
@@ -216,6 +226,6 @@ authRouter.post("/auth/resend-code", resendVerificationCode);
  *       403:
  *         description: Forbidden – only admins allowed
  */
-authRouter.post("/auth/admin/create-user", onlyAdmin, adminCreateUser);
+authRouter.post("/auth/admin/create-user", onlyAdmin, validate({body:adminCreateUserSchema}), adminCreateUser);
 
 export default authRouter;

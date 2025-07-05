@@ -6,8 +6,10 @@ import {
   updateDoctorService,
   deleteDoctorService,
 } from './doctor.service'
+import { newUserSchema, newDoctorSchema } from '@/validation/zodSchemas'
+import { z } from 'zod'
 
-// 🔹 GET /api/doctors - Get all doctors
+// 🔹 GET /api/doctors
 export const getDoctors = async (
   req: Request,
   res: Response,
@@ -28,7 +30,7 @@ export const getDoctors = async (
   }
 }
 
-// 🔹 GET /api/doctors/:id - Get doctor by ID
+// 🔹 GET /api/doctors/:id
 export const getDoctorById = async (
   req: Request,
   res: Response,
@@ -55,32 +57,31 @@ export const getDoctorById = async (
   }
 }
 
-// 🔹 POST /api/doctors - Create new doctor
+// 🔹 POST /api/doctors
 export const createDoctor = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { first_name, last_name, specialization } = req.body
   console.log('[POST] /api/doctors with body:', req.body)
 
-  if (!first_name || !last_name || !specialization) {
-    res.status(400).json({
-      error: 'first_name, last_name, and specialization are required',
-    })
-    return
-  }
-
   try {
-    const message = await createDoctorService(req.body)
+    const userData = newUserSchema.parse(req.body)
+    const doctorData = newDoctorSchema.parse(req.body)
+
+    const message = await createDoctorService({ ...userData, ...doctorData })
     res.status(201).json({ message })
   } catch (error) {
     console.error('createDoctor error:', error)
-    next(error)
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.flatten() })
+    } else {
+      next(error)
+    }
   }
 }
 
-// 🔹 PUT /api/doctors/:id - Update doctor
+// 🔹 PUT /api/doctors/:id
 export const updateDoctor = async (
   req: Request,
   res: Response,
@@ -95,15 +96,26 @@ export const updateDoctor = async (
   }
 
   try {
-    const message = await updateDoctorService(doctorId, req.body)
+    const parsedDoctor = newDoctorSchema.partial().parse(req.body)
+    const parsedUser = newUserSchema.partial().parse(req.body)
+
+    const message = await updateDoctorService(doctorId, {
+      ...parsedUser,
+      ...parsedDoctor,
+    })
+
     res.status(200).json({ message })
   } catch (error) {
     console.error('updateDoctor error:', error)
-    next(error)
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: error.flatten() })
+    } else {
+      next(error)
+    }
   }
 }
 
-// 🔹 DELETE /api/doctors/:id - Delete doctor
+// 🔹 DELETE /api/doctors/:id
 export const deleteDoctor = async (
   req: Request,
   res: Response,
