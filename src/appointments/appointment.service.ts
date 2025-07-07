@@ -2,31 +2,55 @@
 import db from '@/drizzle/db'
 import { appointments } from '@/drizzle/schema'
 import { eq } from 'drizzle-orm'
-import { TAppointmentInsert, TAppointmentSelect } from '@/drizzle/types'
+import type { TAppointmentInsert, TAppointmentSelect, PopulatedAppointment } from '@/drizzle/types'
 
-// 🔹 Get all appointments (admin use)
-export const getAllAppointmentsService = async (): Promise<TAppointmentSelect[]> => {
-  return await db.select().from(appointments)
+// 🔹 Get all appointments (admin use) WITH user and doctor
+export const getAllAppointmentsService = async (): Promise<PopulatedAppointment[]> => {
+  return await db.query.appointments.findMany({
+    with: {
+      user: true,
+      doctor: true,
+      prescriptions: true,
+      payments: true,
+      complaints: true,
+    },
+  })
 }
 
-// 🔹 Get appointments by user ID
+// 🔹 Get appointments by user ID WITH user and doctor
 export const getAppointmentsByUserIdService = async (
   userId: number
-): Promise<TAppointmentSelect[]> => {
+): Promise<PopulatedAppointment[]> => {
   return await db.query.appointments.findMany({
     where: eq(appointments.user_id, userId),
+    with: {
+      user: true,
+      doctor: true,
+      prescriptions: true,
+      payments: true,
+      complaints: true,
+    },
   })
 }
 
-// 🔹 Get appointment by ID
+// 🔹 Get appointment by ID WITH user and doctor
 export const getAppointmentByIdService = async (
   id: number
-): Promise<TAppointmentSelect | null> => {
-  const result = await db.query.appointments.findFirst({
+): Promise<PopulatedAppointment | null> => {
+  const appointment = await db.query.appointments.findFirst({
     where: eq(appointments.appointment_id, id),
+    with: {
+      user: true,
+      doctor: true,
+      prescriptions: true,
+      payments: true,
+      complaints: true,
+    },
   })
-  return result ?? null
+
+  return appointment ?? null
 }
+
 
 // 🔹 Create appointment
 export const createAppointmentService = async (
@@ -52,6 +76,9 @@ export const updateAppointmentStatusService = async (
 export const deleteAppointmentService = async (
   id: number
 ): Promise<boolean> => {
-  const deleted = await db.delete(appointments).where(eq(appointments.appointment_id, id))
+  const deleted = await db
+    .delete(appointments)
+    .where(eq(appointments.appointment_id, id))
+
   return (deleted?.rowCount ?? 0) > 0
 }

@@ -1,84 +1,115 @@
 import { eq } from 'drizzle-orm'
 import db from '@/drizzle/db'
 import { doctors } from '@/drizzle/schema'
-import type { TDoctorInsert, TDoctorSelect, PopulatedDoctor } from '@/drizzle/types'
+import type { TDoctorInsert, PopulatedDoctor } from '@/drizzle/types'
 
-// Get all doctors
-export const getDoctorsService = async (): Promise<TDoctorSelect[]> => {
-    try {
-        return await db.query.doctors.findMany()
-    } catch (error) {
-        console.error('Error fetching doctors:', error)
-        throw new Error('Unable to fetch doctors')
-    }
+// 🔹 Get all doctors with relations
+export const getDoctorsService = async (): Promise<PopulatedDoctor[]> => {
+  try {
+    return await db.query.doctors.findMany({
+      with: {
+        user: true,
+        appointments: {
+          with: {
+            user: true, // patient info
+            complaints: true,
+            payments: true,
+          },
+        },
+        prescriptions: {
+          with: {
+            patient: true,
+            appointment: true,
+          },
+        },
+      },
+    })
+  } catch (error) {
+    console.error('Error fetching doctors:', error)
+    throw new Error('Unable to fetch doctors')
+  }
 }
 
-// Get doctor by ID
+// 🔹 Get doctor by ID with relations
 export const getDoctorByIdService = async (
-    doctorId: number
-): Promise<TDoctorSelect | null> => {
-    try {
-        const doctor = await db.query.doctors.findFirst({
-            where: eq(doctors.doctor_id, doctorId),
-        })
-        return doctor ?? null // 👈 ensure it's null if undefined
-    } catch (error) {
-        console.error(`Error fetching doctor with ID ${doctorId}:`, error)
-        throw new Error('Unable to fetch doctor')
-    }
+  doctorId: number
+): Promise<PopulatedDoctor | null> => {
+  try {
+    const doctor = await db.query.doctors.findFirst({
+      where: eq(doctors.doctor_id, doctorId),
+      with: {
+        user: true,
+        appointments: {
+          with: {
+            user: true,
+            complaints: true,
+            payments: true,
+          },
+        },
+        prescriptions: {
+          with: {
+            patient: true,
+            appointment: true,
+          },
+        },
+      },
+    })
+    return doctor ?? null
+  } catch (error) {
+    console.error(`Error fetching doctor with ID ${doctorId}:`, error)
+    throw new Error('Unable to fetch doctor')
+  }
 }
 
+// ✅ No changes needed below this line unless you want to expand relational creation logic
 
-// Create a new doctor
 export const createDoctorService = async (
-    doctor: TDoctorInsert
+  doctor: TDoctorInsert
 ): Promise<string> => {
-    try {
-        const result = await db.insert(doctors).values(doctor).returning()
-        if (result.length > 0) {
-            return 'Doctor created successfully!'
-        }
-        throw new Error('Doctor creation failed')
-    } catch (error) {
-        console.error('Error creating doctor:', error)
-        throw new Error('Unable to create doctor')
+  try {
+    const result = await db.insert(doctors).values(doctor).returning()
+    if (result.length > 0) {
+      return 'Doctor created successfully!'
     }
+    throw new Error('Doctor creation failed')
+  } catch (error) {
+    console.error('Error creating doctor:', error)
+    throw new Error('Unable to create doctor')
+  }
 }
 
-// Update an existing doctor
 export const updateDoctorService = async (
-    doctorId: number,
-    updates: Partial<TDoctorInsert>
+  doctorId: number,
+  updates: Partial<TDoctorInsert>
 ): Promise<string> => {
-    try {
-        const result = await db
-            .update(doctors)
-            .set(updates)
-            .where(eq(doctors.doctor_id, doctorId))
-            .returning()
+  try {
+    const result = await db
+      .update(doctors)
+      .set(updates)
+      .where(eq(doctors.doctor_id, doctorId))
+      .returning()
 
-        if (result.length > 0) {
-            return 'Doctor updated successfully!'
-        }
-        throw new Error('Doctor update failed or doctor not found')
-    } catch (error) {
-        console.error(`Error updating doctor with ID ${doctorId}:`, error)
-        throw new Error('Unable to update doctor')
+    if (result.length > 0) {
+      return 'Doctor updated successfully!'
     }
+    throw new Error('Doctor update failed or doctor not found')
+  } catch (error) {
+    console.error(`Error updating doctor with ID ${doctorId}:`, error)
+    throw new Error('Unable to update doctor')
+  }
 }
 
-// Delete a doctor
 export const deleteDoctorService = async (
-    doctorId: number
+  doctorId: number
 ): Promise<boolean> => {
-    try {
-        const result = await db
-            .delete(doctors)
-            .where(eq(doctors.doctor_id, doctorId))
-            .returning()
-        return result.length > 0
-    } catch (error) {
-        console.error(`Error deleting doctor with ID ${doctorId}:`, error)
-        throw new Error('Unable to delete doctor')
-    }
+  try {
+    const result = await db
+      .delete(doctors)
+      .where(eq(doctors.doctor_id, doctorId))
+      .returning()
+    return result.length > 0
+  } catch (error) {
+    console.error(`Error deleting doctor with ID ${doctorId}:`, error)
+    throw new Error('Unable to delete doctor')
+  }
 }

@@ -3,7 +3,7 @@ import db from '@/drizzle/db'
 import { users } from '@/drizzle/schema'
 import type { TUserInsert, PopulatedUser } from '@/drizzle/types'
 
-// Get all users with related data
+// 🔹 Get all users with related data
 export const getUsersService = async (): Promise<PopulatedUser[]> => {
   try {
     const result = await db.query.users.findMany({
@@ -11,6 +11,7 @@ export const getUsersService = async (): Promise<PopulatedUser[]> => {
         appointments: true,
         prescriptions: true,
         complaints: true,
+        doctor: true, // Include linked doctor info if applicable
       },
     })
     return result
@@ -20,7 +21,7 @@ export const getUsersService = async (): Promise<PopulatedUser[]> => {
   }
 }
 
-// Get single user by ID with related data
+// 🔹 Get single user by ID with related data
 export const getUserByIdService = async (
   userId: number
 ): Promise<PopulatedUser | null> => {
@@ -31,16 +32,17 @@ export const getUserByIdService = async (
         appointments: true,
         prescriptions: true,
         complaints: true,
+        doctor: true,
       },
     })
-    return result ?? null
+    return result ?? null // Ensure return is PopulatedUser | null
   } catch (error) {
     console.error(`Error fetching user with ID ${userId}:`, error)
     throw new Error('Unable to fetch user by ID')
   }
 }
 
-// Create a new user
+// 🔹 Create a new user
 export const createUserService = async (
   user: TUserInsert
 ): Promise<string> => {
@@ -56,7 +58,7 @@ export const createUserService = async (
   }
 }
 
-// Update an existing user
+// 🔹 Update an existing user
 export const updateUserService = async (
   userId: number,
   user: Partial<TUserInsert>
@@ -78,7 +80,7 @@ export const updateUserService = async (
   }
 }
 
-// Delete a user
+// 🔹 Delete a user
 export const deleteUserService = async (
   userId: number
 ): Promise<boolean> => {

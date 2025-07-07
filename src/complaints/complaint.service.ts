@@ -1,22 +1,33 @@
 // src/complaints/complaint.service.ts
-import  db  from '@/drizzle/db'
+import db from '@/drizzle/db'
 import { complaints } from '@/drizzle/schema'
 import { eq } from 'drizzle-orm'
 import { TComplaintInsert, TComplaintSelect } from '@/drizzle/types'
 
-export const getAllComplaintsService = async (): Promise<TComplaintSelect[]> => {
-  return await db.select().from(complaints)
+// 🔹 Get all complaints WITH user and appointment
+export const getAllComplaintsService = async () => {
+  return await db.query.complaints.findMany({
+    with: {
+      user: true,
+      appointment: true,
+    },
+  })
 }
 
+// 🔹 Get complaint by ID WITH user and appointment
 export const getComplaintByIdService = async (
   id: number
-): Promise<TComplaintSelect | null> => {
-  const result = await db.query.complaints.findFirst({
+) => {
+  return await db.query.complaints.findFirst({
     where: eq(complaints.complaint_id, id),
+    with: {
+      user: true,
+      appointment: true,
+    },
   })
-  return result ?? null
 }
 
+// 🔹 Create complaint
 export const createComplaintService = async (
   data: TComplaintInsert
 ): Promise<TComplaintSelect> => {
@@ -24,6 +35,7 @@ export const createComplaintService = async (
   return inserted
 }
 
+// 🔹 Update complaint status
 export const updateComplaintStatusService = async (
   id: number,
   status: 'Open' | 'In Progress' | 'Resolved' | 'Closed'
@@ -35,11 +47,13 @@ export const updateComplaintStatusService = async (
   return 'Complaint status updated'
 }
 
-export const deleteComplaintService = async (id: number): Promise<boolean> => {
+// 🔹 Delete complaint
+export const deleteComplaintService = async (
+  id: number
+): Promise<boolean> => {
   const deleted = await db
     .delete(complaints)
     .where(eq(complaints.complaint_id, id))
 
   return (deleted?.rowCount ?? 0) > 0
 }
-

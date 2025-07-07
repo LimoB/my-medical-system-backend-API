@@ -32,7 +32,9 @@ export interface PopulatedUser extends TUserSelect {
   appointments?: TAppointmentSelect[]
   prescriptions?: TPrescriptionSelect[]
   complaints?: TComplaintSelect[]
+  doctor?: TDoctorSelect //must be added if using doctor relation
 }
+
 
 export interface VerifiedUser extends TUserSelect {
   is_verified: boolean
@@ -42,9 +44,18 @@ export interface VerifiedUser extends TUserSelect {
 }
 
 export interface PopulatedDoctor extends TDoctorSelect {
-  appointments?: TAppointmentSelect[]
-  prescriptions?: TPrescriptionSelect[]
+  user?: TUserSelect
+  appointments?: (TAppointmentSelect & {
+    user?: TUserSelect
+    complaints?: TComplaintSelect[]
+    payments?: TPaymentSelect[]
+  })[]
+  prescriptions?: (TPrescriptionSelect & {
+    patient?: TUserSelect
+    appointment?: TAppointmentSelect
+  })[]
 }
+
 
 export interface PopulatedAppointment extends TAppointmentSelect {
   user?: TUserSelect
@@ -61,8 +72,12 @@ export interface PopulatedPrescription extends TPrescriptionSelect {
 }
 
 export interface PopulatedPayment extends TPaymentSelect {
-  appointment?: TAppointmentSelect
+  appointment?: {
+    doctor?: TDoctorSelect
+    user?: TUserSelect
+  } & TAppointmentSelect
 }
+
 
 export interface PopulatedComplaint extends TComplaintSelect {
   user?: TUserSelect

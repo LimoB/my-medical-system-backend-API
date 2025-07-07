@@ -1,12 +1,21 @@
 import { eq } from 'drizzle-orm'
 import db from '@/drizzle/db'
 import { payments } from '@/drizzle/schema'
-import type { TPaymentInsert, TPaymentSelect } from '@/drizzle/types'
+import type { TPaymentInsert, PopulatedPayment } from '@/drizzle/types'
 
-// Get all payments
-export const getPaymentsService = async (): Promise<TPaymentSelect[]> => {
+// 🔹 Get all payments with appointment + doctor & user
+export const getPaymentsService = async (): Promise<PopulatedPayment[]> => {
   try {
-    const result = await db.query.payments.findMany()
+    const result = await db.query.payments.findMany({
+      with: {
+        appointment: {
+          with: {
+            doctor: true,
+            user: true,
+          },
+        },
+      },
+    })
     return result
   } catch (error) {
     console.error('Error fetching payments:', error)
@@ -14,13 +23,21 @@ export const getPaymentsService = async (): Promise<TPaymentSelect[]> => {
   }
 }
 
-// Get payment by ID
+// 🔹 Get payment by ID with appointment + doctor & user
 export const getPaymentByIdService = async (
   paymentId: number
-): Promise<TPaymentSelect | null> => {
+): Promise<PopulatedPayment | null> => {
   try {
     const result = await db.query.payments.findFirst({
       where: eq(payments.payment_id, paymentId),
+      with: {
+        appointment: {
+          with: {
+            doctor: true,
+            user: true,
+          },
+        },
+      },
     })
     return result ?? null
   } catch (error) {
@@ -29,7 +46,7 @@ export const getPaymentByIdService = async (
   }
 }
 
-// Create payment
+// 🔹 Create a payment
 export const createPaymentService = async (
   data: TPaymentInsert
 ): Promise<string> => {
@@ -45,7 +62,7 @@ export const createPaymentService = async (
   }
 }
 
-// Update payment
+// 🔹 Update a payment
 export const updatePaymentService = async (
   paymentId: number,
   data: Partial<TPaymentInsert>
@@ -67,7 +84,7 @@ export const updatePaymentService = async (
   }
 }
 
-// Delete payment
+// 🔹 Delete a payment
 export const deletePaymentService = async (
   paymentId: number
 ): Promise<boolean> => {

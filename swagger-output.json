@@ -683,18 +683,17 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "name",
-                  "email",
+                  "user_id",
                   "specialization"
                 ],
                 "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string"
+                  "user_id": {
+                    "type": "number"
                   },
                   "specialization": {
+                    "type": "string"
+                  },
+                  "available_days": {
                     "type": "string"
                   }
                 }
@@ -764,13 +763,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string"
+                  "user_id": {
+                    "type": "number"
                   },
                   "specialization": {
+                    "type": "string"
+                  },
+                  "available_days": {
                     "type": "string"
                   }
                 }
