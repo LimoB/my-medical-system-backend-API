@@ -2,19 +2,24 @@ import { eq } from 'drizzle-orm'
 import db from '@/drizzle/db'
 import { users } from '@/drizzle/schema'
 import type { TUserInsert, PopulatedUser } from '@/drizzle/types'
+import { sanitizeUser, sanitizeUsers } from '@/utils/sanitize'
 
-// 🔹 Get all users with related data
-export const getUsersService = async (): Promise<PopulatedUser[]> => {
+// Define a sanitized version of the PopulatedUser type
+type SanitizedUser = Omit<PopulatedUser, 'password' | 'verification_token' | 'token_expiry'>
+
+// 🔹 Get all users with related data (Admin only)
+export const getUsersService = async (): Promise<SanitizedUser[]> => {
   try {
     const result = await db.query.users.findMany({
       with: {
         appointments: true,
         prescriptions: true,
         complaints: true,
-        doctor: true, // Include linked doctor info if applicable
+        doctor: true,
       },
     })
-    return result
+
+    return sanitizeUsers(result)
   } catch (error) {
     console.error('Error fetching users:', error)
     throw new Error('Unable to fetch users')
@@ -24,7 +29,7 @@ export const getUsersService = async (): Promise<PopulatedUser[]> => {
 // 🔹 Get single user by ID with related data
 export const getUserByIdService = async (
   userId: number
-): Promise<PopulatedUser | null> => {
+): Promise<SanitizedUser | null> => {
   try {
     const result = await db.query.users.findFirst({
       where: eq(users.user_id, userId),
@@ -35,7 +40,8 @@ export const getUserByIdService = async (
         doctor: true,
       },
     })
-    return result ?? null // Ensure return is PopulatedUser | null
+
+    return result ? sanitizeUser(result) : null
   } catch (error) {
     console.error(`Error fetching user with ID ${userId}:`, error)
     throw new Error('Unable to fetch user by ID')

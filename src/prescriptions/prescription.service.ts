@@ -2,9 +2,16 @@ import { eq } from 'drizzle-orm'
 import db from '@/drizzle/db'
 import { prescriptions } from '@/drizzle/schema'
 import type { TPrescriptionInsert, PopulatedPrescription } from '@/drizzle/types'
+import { sanitizeUser } from '@/utils/sanitize'
 
 // Get all prescriptions with related appointment + doctor + patient
-export const getPrescriptionsService = async (): Promise<PopulatedPrescription[]> => {
+type SanitizedPrescription = Omit<PopulatedPrescription, 'doctor' | 'patient'> & {
+  doctor: ReturnType<typeof sanitizeUser>
+  patient: ReturnType<typeof sanitizeUser>
+}
+
+// 🔹 Get all prescriptions with sanitized patient/doctor
+export const getPrescriptionsService = async (): Promise<SanitizedPrescription[]> => {
   try {
     const result = await db.query.prescriptions.findMany({
       with: {
@@ -13,19 +20,24 @@ export const getPrescriptionsService = async (): Promise<PopulatedPrescription[]
         patient: true,
       },
     })
-    return result
+
+    return result.map((prescription) => ({
+      ...prescription,
+      doctor: sanitizeUser(prescription.doctor),
+      patient: sanitizeUser(prescription.patient),
+    }))
   } catch (error) {
     console.error('Error fetching prescriptions:', error)
     throw new Error('Unable to fetch prescriptions')
   }
 }
 
-// Get a single prescription by ID
+// 🔹 Get a single prescription by ID with sanitized fields
 export const getPrescriptionByIdService = async (
   prescriptionId: number
-): Promise<PopulatedPrescription | null> => {
+): Promise<SanitizedPrescription | null> => {
   try {
-    const result = await db.query.prescriptions.findFirst({
+    const prescription = await db.query.prescriptions.findFirst({
       where: eq(prescriptions.prescription_id, prescriptionId),
       with: {
         appointment: true,
@@ -33,12 +45,20 @@ export const getPrescriptionByIdService = async (
         patient: true,
       },
     })
-    return result ?? null
+
+    if (!prescription) return null
+
+    return {
+      ...prescription,
+      doctor: sanitizeUser(prescription.doctor),
+      patient: sanitizeUser(prescription.patient),
+    }
   } catch (error) {
     console.error(`Error fetching prescription ID ${prescriptionId}:`, error)
     throw new Error('Unable to fetch prescription')
   }
 }
+
 
 // Create a new prescription
 export const createPrescriptionService = async (

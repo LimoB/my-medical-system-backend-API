@@ -6,6 +6,7 @@ import {
   updateUserService,
   deleteUserService,
 } from '@/users/user.service'
+import { sanitizeUser } from '@/utils/sanitize'
 
 // 🔹 GET /api/users - Admin only
 export const getUsers = async (
@@ -27,9 +28,9 @@ export const getUsers = async (
       return
     }
 
-    res.status(200).json(users)
+    res.status(200).json(users) // Already sanitized in service
   } catch (error) {
-    console.error(' Error in getUsersController:', error)
+    console.error('Error in getUsersController:', error)
     next(error)
   }
 }
@@ -64,9 +65,9 @@ export const getUserById = async (
       return
     }
 
-    res.status(200).json(user)
+    res.status(200).json(user) // Already sanitized in service
   } catch (error) {
-    console.error(' Error in getUserByIdController:', error)
+    console.error('Error in getUserByIdController:', error)
     next(error)
   }
 }
@@ -122,7 +123,7 @@ export const updateUser = async (
     const message = await updateUserService(userId, updates)
     res.status(200).json({ message })
   } catch (error) {
-    console.error(' Error in updateUserController:', error)
+    console.error('Error in updateUserController:', error)
     next(error)
   }
 }
@@ -154,7 +155,7 @@ export const deleteUser = async (
       res.status(404).json({ message: 'User not found or could not be deleted' })
     }
   } catch (error) {
-    console.error(' Error in deleteUserController:', error)
+    console.error('Error in deleteUserController:', error)
     next(error)
   }
 }

@@ -60,7 +60,7 @@ export const getPrescriptionById = async (
     if (
       req.user?.role !== 'admin' &&
       req.user?.role !== 'doctor' &&
-      prescription.patient_id?.toString() !== userId
+      prescription.patient?.user_id?.toString() !== userId
     ) {
       res.status(403).json({ error: 'Access denied' })
       return
@@ -111,12 +111,12 @@ export const updatePrescription = async (
     return
   }
 
-  try {
-    if (req.user?.role !== 'admin' && req.user?.role !== 'doctor') {
-      res.status(403).json({ error: 'Access denied' })
-      return
-    }
+  if (req.user?.role !== 'admin' && req.user?.role !== 'doctor') {
+    res.status(403).json({ error: 'Access denied' })
+    return
+  }
 
+  try {
     const message = await updatePrescriptionService(prescriptionId, updates)
     res.status(200).json({ message })
   } catch (error) {
@@ -139,12 +139,12 @@ export const deletePrescription = async (
     return
   }
 
-  try {
-    if (req.user?.role !== 'admin') {
-      res.status(403).json({ error: 'Access denied' })
-      return
-    }
+  if (req.user?.role !== 'admin') {
+    res.status(403).json({ error: 'Access denied' })
+    return
+  }
 
+  try {
     const deleted = await deletePrescriptionService(prescriptionId)
     if (deleted) {
       res.status(200).json({ message: 'Prescription deleted successfully' })

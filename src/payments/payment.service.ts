@@ -1,7 +1,10 @@
 import { eq } from 'drizzle-orm'
 import db from '@/drizzle/db'
 import { payments } from '@/drizzle/schema'
-import type { TPaymentInsert, PopulatedPayment } from '@/drizzle/types'
+import type { TPaymentInsert, PopulatedPayment, PopulatedUser } from '@/drizzle/types'
+import { sanitizeUser, sanitizeUsers } from '@/utils/sanitize'
+
+type SanitizedUser = Omit<PopulatedUser, 'password' | 'verification_token' | 'token_expiry'>
 
 // 🔹 Get all payments with appointment + doctor & user
 export const getPaymentsService = async (): Promise<PopulatedPayment[]> => {
@@ -16,6 +19,7 @@ export const getPaymentsService = async (): Promise<PopulatedPayment[]> => {
         },
       },
     })
+    
     return result
   } catch (error) {
     console.error('Error fetching payments:', error)
