@@ -7,15 +7,18 @@ import {
   deletePaymentService,
 } from '@/payments/payment.service'
 
-
-
-// GET /api/payments
+// 🔹 GET /api/payments - Admin and doctor only
 export const getPayments = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
+    if (req.user?.role !== 'admin' && req.user?.role !== 'doctor') {
+      res.status(403).json({ error: 'Access denied' })
+      return
+    }
+
     const payments = await getPaymentsService()
     res.status(200).json(payments)
   } catch (error) {
@@ -24,7 +27,7 @@ export const getPayments = async (
   }
 }
 
-// GET /api/payments/:id
+// 🔹 GET /api/payments/:id - Admin, doctor, or owner of the appointment
 export const getPaymentById = async (
   req: Request,
   res: Response,
@@ -44,6 +47,16 @@ export const getPaymentById = async (
       return
     }
 
+    const userId = req.user?.userId?.toString()
+    const isAdmin = req.user?.role === 'admin'
+    const isDoctor = req.user?.role === 'doctor'
+    const isOwner = payment.appointment?.user?.user_id?.toString() === userId
+
+    if (!isAdmin && !isDoctor && !isOwner) {
+      res.status(403).json({ error: 'Access denied' })
+      return
+    }
+
     res.status(200).json(payment)
   } catch (error) {
     console.error('Error in getPaymentById:', error)
@@ -51,12 +64,17 @@ export const getPaymentById = async (
   }
 }
 
-// POST /api/payments
+// 🔹 POST /api/payments - Admin and doctor only
 export const createPayment = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  if (req.user?.role !== 'admin' && req.user?.role !== 'doctor') {
+    res.status(403).json({ error: 'Only doctors or admins can create payments' })
+    return
+  }
+
   try {
     const message = await createPaymentService(req.body)
     res.status(201).json({ message })
@@ -66,7 +84,7 @@ export const createPayment = async (
   }
 }
 
-// PUT /api/payments/:id
+// 🔹 PUT /api/payments/:id - Admin only
 export const updatePayment = async (
   req: Request,
   res: Response,
@@ -79,6 +97,11 @@ export const updatePayment = async (
     return
   }
 
+  if (req.user?.role !== 'admin') {
+    res.status(403).json({ error: 'Only admin can update payments' })
+    return
+  }
+
   try {
     const message = await updatePaymentService(paymentId, req.body)
     res.status(200).json({ message })
@@ -88,7 +111,7 @@ export const updatePayment = async (
   }
 }
 
-// DELETE /api/payments/:id
+// 🔹 DELETE /api/payments/:id - Admin only
 export const deletePayment = async (
   req: Request,
   res: Response,
@@ -98,6 +121,11 @@ export const deletePayment = async (
 
   if (isNaN(paymentId)) {
     res.status(400).json({ error: 'Invalid payment ID' })
+    return
+  }
+
+  if (req.user?.role !== 'admin') {
+    res.status(403).json({ error: 'Only admin can delete payments' })
     return
   }
 

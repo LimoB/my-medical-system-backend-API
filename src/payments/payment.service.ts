@@ -1,13 +1,14 @@
 import { eq } from 'drizzle-orm'
 import db from '@/drizzle/db'
 import { payments } from '@/drizzle/schema'
-import type { TPaymentInsert, PopulatedPayment, PopulatedUser } from '@/drizzle/types'
-import { sanitizeUser, sanitizeUsers } from '@/utils/sanitize'
+import type {
+  TPaymentInsert,
+  SanitizedPayment,
+} from '@/drizzle/types'
+import { sanitizeUser } from '@/utils/sanitize'
 
-type SanitizedUser = Omit<PopulatedUser, 'password' | 'verification_token' | 'token_expiry'>
-
-// 🔹 Get all payments with appointment + doctor & user
-export const getPaymentsService = async (): Promise<PopulatedPayment[]> => {
+// 🔹 Get all payments with appointment + doctor & user (sanitized)
+export const getPaymentsService = async (): Promise<SanitizedPayment[]> => {
   try {
     const result = await db.query.payments.findMany({
       with: {
@@ -19,20 +20,33 @@ export const getPaymentsService = async (): Promise<PopulatedPayment[]> => {
         },
       },
     })
-    
-    return result
+
+    const sanitized = result.map((payment) => ({
+      ...payment,
+      appointment: {
+        ...payment.appointment,
+        doctor: payment.appointment.doctor
+          ? sanitizeUser(payment.appointment.doctor)
+          : undefined,
+        user: payment.appointment.user
+          ? sanitizeUser(payment.appointment.user)
+          : undefined,
+      },
+    }))
+
+    return sanitized
   } catch (error) {
     console.error('Error fetching payments:', error)
     throw new Error('Unable to fetch payments')
   }
 }
 
-// 🔹 Get payment by ID with appointment + doctor & user
+// 🔹 Get payment by ID with appointment + doctor & user (sanitized)
 export const getPaymentByIdService = async (
   paymentId: number
-): Promise<PopulatedPayment | null> => {
+): Promise<SanitizedPayment | null> => {
   try {
-    const result = await db.query.payments.findFirst({
+    const payment = await db.query.payments.findFirst({
       where: eq(payments.payment_id, paymentId),
       with: {
         appointment: {
@@ -43,7 +57,23 @@ export const getPaymentByIdService = async (
         },
       },
     })
-    return result ?? null
+
+    if (!payment) return null
+
+    const sanitized: SanitizedPayment = {
+      ...payment,
+      appointment: {
+        ...payment.appointment,
+        doctor: payment.appointment.doctor
+          ? sanitizeUser(payment.appointment.doctor)
+          : undefined,
+        user: payment.appointment.user
+          ? sanitizeUser(payment.appointment.user)
+          : undefined,
+      },
+    }
+
+    return sanitized
   } catch (error) {
     console.error(`Error fetching payment with ID ${paymentId}:`, error)
     throw new Error('Unable to fetch payment by ID')

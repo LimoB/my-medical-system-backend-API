@@ -13,7 +13,7 @@ export const getComplaints = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  console.log('➡️ GET /api/complaints hit')
+  console.log(' GET /api/complaints hit')
 
   try {
     if (req.user?.role !== 'admin') {
@@ -29,7 +29,7 @@ export const getComplaints = async (
 
     res.status(200).json(complaints)
   } catch (error) {
-    console.error('❌ Error in getComplaintsController:', error)
+    console.error('Error in getComplaintsController:', error)
     next(error)
   }
 }

@@ -1,12 +1,17 @@
 import { eq } from 'drizzle-orm'
 import db from '@/drizzle/db'
 import { doctors } from '@/drizzle/schema'
-import type { TDoctorInsert, PopulatedDoctor } from '@/drizzle/types'
+import type {
+  TDoctorInsert,
+  SanitizedDoctor,
+  PopulatedDoctor,
+} from '@/drizzle/types'
+import { sanitizeUser } from '@/utils/sanitize'
 
-// 🔹 Get all doctors with relations
-export const getDoctorsService = async (): Promise<PopulatedDoctor[]> => {
+// 🔹 Get all doctors with deeply sanitized relations
+export const getDoctorsService = async (): Promise<SanitizedDoctor[]> => {
   try {
-    return await db.query.doctors.findMany({
+    const doctorsList = await db.query.doctors.findMany({
       with: {
         user: true,
         appointments: {
@@ -24,16 +29,29 @@ export const getDoctorsService = async (): Promise<PopulatedDoctor[]> => {
         },
       },
     })
+
+    return doctorsList.map((doctor): SanitizedDoctor => ({
+      ...doctor,
+      user: doctor.user ? sanitizeUser(doctor.user) : undefined,
+      appointments: doctor.appointments?.map((appt) => ({
+        ...appt,
+        user: appt.user ? sanitizeUser(appt.user) : undefined,
+      })),
+      prescriptions: doctor.prescriptions?.map((presc) => ({
+        ...presc,
+        patient: presc.patient ? sanitizeUser(presc.patient) : undefined,
+      })),
+    }))
   } catch (error) {
     console.error('Error fetching doctors:', error)
     throw new Error('Unable to fetch doctors')
   }
 }
 
-// 🔹 Get doctor by ID with relations
+// 🔹 Get single doctor by ID with sanitized relations
 export const getDoctorByIdService = async (
   doctorId: number
-): Promise<PopulatedDoctor | null> => {
+): Promise<SanitizedDoctor | null> => {
   try {
     const doctor = await db.query.doctors.findFirst({
       where: eq(doctors.doctor_id, doctorId),
@@ -54,15 +72,28 @@ export const getDoctorByIdService = async (
         },
       },
     })
-    return doctor ?? null
+
+    if (!doctor) return null
+
+    return {
+      ...doctor,
+      user: doctor.user ? sanitizeUser(doctor.user) : undefined,
+      appointments: doctor.appointments?.map((appt) => ({
+        ...appt,
+        user: appt.user ? sanitizeUser(appt.user) : undefined,
+      })),
+      prescriptions: doctor.prescriptions?.map((presc) => ({
+        ...presc,
+        patient: presc.patient ? sanitizeUser(presc.patient) : undefined,
+      })),
+    }
   } catch (error) {
     console.error(`Error fetching doctor with ID ${doctorId}:`, error)
     throw new Error('Unable to fetch doctor')
   }
 }
 
-// ✅ No changes needed below this line unless you want to expand relational creation logic
-
+// 🔹 Create doctor
 export const createDoctorService = async (
   doctor: TDoctorInsert
 ): Promise<string> => {
@@ -78,6 +109,7 @@ export const createDoctorService = async (
   }
 }
 
+// 🔹 Update doctor
 export const updateDoctorService = async (
   doctorId: number,
   updates: Partial<TDoctorInsert>
@@ -99,6 +131,7 @@ export const updateDoctorService = async (
   }
 }
 
+// 🔹 Delete doctor
 export const deleteDoctorService = async (
   doctorId: number
 ): Promise<boolean> => {

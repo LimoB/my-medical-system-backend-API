@@ -2,37 +2,60 @@
 import db from '@/drizzle/db'
 import { complaints } from '@/drizzle/schema'
 import { eq } from 'drizzle-orm'
-import { TComplaintInsert, TComplaintSelect } from '@/drizzle/types'
+import {
+  TComplaintInsert,
+  SanitizedPopulatedComplaint,
+} from '@/drizzle/types'
+import { sanitizeUser } from '@/utils/sanitize'
 
-// 🔹 Get all complaints WITH user and appointment
-export const getAllComplaintsService = async () => {
-  return await db.query.complaints.findMany({
+// 🔹 Get all complaints WITH sanitized user and appointment
+export const getAllComplaintsService = async (): Promise<SanitizedPopulatedComplaint[]> => {
+  const complaintsList = await db.query.complaints.findMany({
     with: {
       user: true,
       appointment: true,
     },
   })
+
+  return complaintsList.map((complaint) => ({
+    ...complaint,
+    user: complaint.user ? sanitizeUser(complaint.user) : undefined,
+    appointment: complaint.appointment ?? undefined, // 🛠 fix null issue
+  }))
 }
 
-// 🔹 Get complaint by ID WITH user and appointment
+// 🔹 Get complaint by ID WITH sanitized user and appointment
 export const getComplaintByIdService = async (
   id: number
-) => {
-  return await db.query.complaints.findFirst({
+): Promise<SanitizedPopulatedComplaint | null> => {
+  const complaint = await db.query.complaints.findFirst({
     where: eq(complaints.complaint_id, id),
     with: {
       user: true,
       appointment: true,
     },
   })
+
+  if (!complaint) return null
+
+  return {
+    ...complaint,
+    user: complaint.user ? sanitizeUser(complaint.user) : undefined,
+    appointment: complaint.appointment ?? undefined,
+  }
 }
 
-// 🔹 Create complaint
+// 🔹 Create complaint (minimal return, could also populate if needed)
 export const createComplaintService = async (
   data: TComplaintInsert
-): Promise<TComplaintSelect> => {
+): Promise<SanitizedPopulatedComplaint> => {
   const [inserted] = await db.insert(complaints).values(data).returning()
-  return inserted
+
+  return {
+    ...inserted,
+    user: undefined,
+    appointment: undefined,
+  }
 }
 
 // 🔹 Update complaint status
@@ -44,6 +67,7 @@ export const updateComplaintStatusService = async (
     .update(complaints)
     .set({ status, updated_at: new Date() })
     .where(eq(complaints.complaint_id, id))
+
   return 'Complaint status updated'
 }
 
