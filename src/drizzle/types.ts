@@ -58,10 +58,10 @@ export interface PopulatedDoctor extends TDoctorSelect {
 
 export interface PopulatedAppointment extends TAppointmentSelect {
   user?: TUserSelect
-  doctor?: TDoctorSelect
+  doctor?: PopulatedDoctor // ✅ include user inside doctor
   prescriptions?: TPrescriptionSelect[]
-  payment?: TPaymentSelect
-  complaint?: TComplaintSelect
+  payments?: TPaymentSelect[]
+  complaints?: TComplaintSelect[]
 }
 
 export interface PopulatedPrescription extends TPrescriptionSelect {
@@ -86,25 +86,39 @@ export interface PopulatedComplaint extends TComplaintSelect {
 
 type SensitiveFields = 'password' | 'verification_token' | 'token_expiry'
 
-// Sanitize base user
+// ✅ Base user with sensitive fields removed
 export type SanitizedUser = Omit<TUserSelect, SensitiveFields>
 
-// Sanitize full user profile
+// ✅ Full user profile sanitized
 export type SanitizedPopulatedUser = Omit<PopulatedUser, SensitiveFields>
 
-// Sanitize prescription (remove sensitive patient data)
+// ✅ Doctor sanitized (including embedded user and appointments)
+export type SanitizedDoctor = Omit<PopulatedDoctor, 'user' | 'appointments' | 'prescriptions'> & {
+  user?: SanitizedUser;
+  appointments?: (Omit<PopulatedAppointment, 'user'> & {
+    user?: SanitizedUser;
+  })[];
+  prescriptions?: (Omit<PopulatedPrescription, 'patient'> & {
+    patient?: SanitizedUser;
+  })[];
+};
+
+// ✅ Appointment sanitized (includes full doctor with user sanitized)
+export type SanitizedAppointment = Omit<TAppointmentSelect, 'user_id' | 'doctor_id'> & {
+  user?: SanitizedUser
+  doctor?: SanitizedDoctor
+  prescriptions?: TPrescriptionSelect[]
+  payments?: TPaymentSelect[]
+  complaints?: TComplaintSelect[]
+}
+
+// ✅ Prescription with patient sanitized
 export type SanitizedPrescription = Omit<PopulatedPrescription, 'doctor' | 'patient'> & {
   doctor?: TDoctorSelect
   patient?: SanitizedUser
 }
 
-// Sanitize appointment (remove sensitive user data)
-export type SanitizedAppointment = Omit<PopulatedAppointment, 'user' | 'doctor'> & {
-  user?: SanitizedUser
-  doctor?: TDoctorSelect
-}
-
-// Sanitize payment (deep nested user inside appointment)
+// ✅ Payment with sanitized nested appointment
 export type SanitizedPayment = Omit<PopulatedPayment, 'appointment'> & {
   appointment?: Omit<PopulatedPayment['appointment'], 'user' | 'doctor'> & {
     user?: SanitizedUser
@@ -112,22 +126,10 @@ export type SanitizedPayment = Omit<PopulatedPayment, 'appointment'> & {
   }
 }
 
-// Sanitize doctor profile deeply
-export type SanitizedDoctor = Omit<PopulatedDoctor, 'user' | 'appointments' | 'prescriptions'> & {
-  user?: SanitizedUser
-  appointments?: (Omit<PopulatedAppointment, 'user'> & {
-    user?: SanitizedUser
-  })[]
-  prescriptions?: (Omit<PopulatedPrescription, 'patient'> & {
-    patient?: SanitizedUser
-  })[]
-}
-
-// Sanitize complaint if needed (optional)
+// ✅ Complaint sanitized
 export type SanitizedComplaint = Omit<PopulatedComplaint, 'user'> & {
   user?: SanitizedUser
 }
-
 
 export type SanitizedPopulatedComplaint = Omit<PopulatedComplaint, 'user' | 'appointment'> & {
   user?: SanitizedUser

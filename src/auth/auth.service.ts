@@ -8,24 +8,28 @@ import jwt from "jsonwebtoken";
 // TYPES
 // ────────────────────────────────
 
-type UserInsert = InferInsertModel<typeof users>;
-type UserSelect = InferSelectModel<typeof users>;
+export type UserInsert = InferInsertModel<typeof users>;
+export type UserSelect = InferSelectModel<typeof users>;
 
-const allowedRoles = ["user", "admin", "doctor"] as const;
-type AllowedRole = typeof allowedRoles[number];
+export const allowedRoles = ["user", "admin", "doctor"] as const;
+export type AllowedRole = typeof allowedRoles[number];
 
-function isAllowedRole(value: any): value is AllowedRole {
+export function isAllowedRole(value: any): value is AllowedRole {
   return allowedRoles.includes(value);
 }
 
 // ────────────────────────────────
-// USERS TABLE SERVICES
+// CREATE USER
 // ────────────────────────────────
 
 export const createUserService = async (user: UserInsert): Promise<UserSelect> => {
   const [newUser] = await db.insert(users).values(user).returning();
   return newUser;
 };
+
+// ────────────────────────────────
+// FIND USERS
+// ────────────────────────────────
 
 export const getUserByEmailService = async (
   email: string
@@ -34,6 +38,18 @@ export const getUserByEmailService = async (
     where: eq(users.email, email),
   });
 };
+
+export const getUserByResetTokenService = async (
+  token: string
+): Promise<UserSelect | undefined> => {
+  return await db.query.users.findFirst({
+    where: eq(users.verification_token, token),
+  });
+};
+
+// ────────────────────────────────
+// VERIFICATION TOKEN HANDLERS
+// ────────────────────────────────
 
 export const updateVerificationToken = async (
   email: string,
@@ -48,48 +64,6 @@ export const updateVerificationToken = async (
       updated_at: new Date(),
     })
     .where(eq(users.email, email));
-};
-
-export const verifyUserEmail = async (
-  email: string,
-  code: string
-): Promise<{ user: UserSelect; token: string }> => {
-  const user = await db.query.users.findFirst({
-    where: eq(users.email, email),
-  });
-
-  if (!user) throw new Error("User not found.");
-  if (user.is_verified) throw new Error("User already verified.");
-  if (user.verification_token !== code) throw new Error("Invalid verification code.");
-  if (user.token_expiry && new Date(user.token_expiry) < new Date()) {
-    throw new Error("Verification code has expired.");
-  }
-
-  const [updatedUser] = await db
-    .update(users)
-    .set({
-      is_verified: true,
-      verification_token: null,
-      token_expiry: null,
-      updated_at: new Date(),
-    })
-    .where(eq(users.email, email))
-    .returning();
-
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET not configured");
-
-  const token = jwt.sign(
-    {
-      userId: updatedUser.user_id,
-      email: updatedUser.email,
-      role: updatedUser.role,
-    },
-    secret,
-    { expiresIn: "1h" }
-  );
-
-  return { user: updatedUser, token };
 };
 
 export const saveResetTokenService = async (
@@ -107,19 +81,62 @@ export const saveResetTokenService = async (
     .where(eq(users.user_id, userId));
 };
 
-export const getUserByResetTokenService = async (
-  token: string
-): Promise<UserSelect | undefined> => {
-  return await db.query.users.findFirst({
-    where: eq(users.verification_token, token),
+// ────────────────────────────────
+// EMAIL VERIFICATION
+// ────────────────────────────────
+
+export const verifyUserEmail = async (
+  email: string,
+  code: string
+): Promise<{ user: UserSelect; token: string }> => {
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, email),
   });
+
+  if (!user) throw new Error("User not found.");
+  if (user.is_verified) throw new Error("User is already verified.");
+  if (user.verification_token !== code) throw new Error("Invalid verification code.");
+  if (user.token_expiry && new Date(user.token_expiry) < new Date()) {
+    throw new Error("Verification code has expired.");
+  }
+
+  const [updatedUser] = await db
+    .update(users)
+    .set({
+      is_verified: true,
+      verification_token: null,
+      token_expiry: null,
+      updated_at: new Date(),
+    })
+    .where(eq(users.email, email))
+    .returning();
+
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET is not configured.");
+
+  const token = jwt.sign(
+    {
+      userId: updatedUser.user_id,
+      email: updatedUser.email,
+      role: updatedUser.role,
+    },
+    secret,
+    { expiresIn: "1h" }
+  );
+
+  return { user: updatedUser, token };
 };
+
+// ────────────────────────────────
+// RESET PASSWORD
+// ────────────────────────────────
 
 export const resetUserPasswordService = async (
   userId: number,
   hashedPassword: string
 ): Promise<void> => {
-  await db.update(users)
+  await db
+    .update(users)
     .set({
       password: hashedPassword,
       updated_at: new Date(),

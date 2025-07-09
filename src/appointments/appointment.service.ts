@@ -1,18 +1,17 @@
-// --- src/appointments/appointment.service.ts ---
-import db from '@/drizzle/db'
-import { appointments } from '@/drizzle/schema'
-import { eq } from 'drizzle-orm'
+import db from '@/drizzle/db';
+import { appointments, users } from '@/drizzle/schema';
+import { eq, desc, inArray } from 'drizzle-orm';
 import {
   TAppointmentInsert,
   TAppointmentSelect,
-  PopulatedAppointment,
   SanitizedAppointment,
-} from '@/drizzle/types'
-import { sanitizeUser } from '@/utils/sanitize'
+} from '@/drizzle/types';
+import { sanitizeUser } from '@/utils/sanitize';
 
-// 🔹 Get all appointments (admin use) WITH user and doctor (sanitized)
+// 🔹 Get all appointments (admin use) WITH user and doctor (including doctor.user)
 export const getAllAppointmentsService = async (): Promise<SanitizedAppointment[]> => {
   const appointmentsList = await db.query.appointments.findMany({
+    orderBy: desc(appointments.created_at),
     with: {
       user: true,
       doctor: true,
@@ -20,21 +19,44 @@ export const getAllAppointmentsService = async (): Promise<SanitizedAppointment[
       payments: true,
       complaints: true,
     },
-  })
+  });
 
-  return appointmentsList.map((appt) => ({
+  // Collect doctor user_ids to fetch their user profiles
+  const doctorUserIds = Array.from(
+    new Set(
+      appointmentsList
+        .filter(a => a.doctor?.user_id)
+        .map(a => a.doctor!.user_id)
+    )
+  );
+
+  const doctorUsers = await db.query.users.findMany({
+    where: inArray(users.user_id, doctorUserIds),
+  });
+
+  const doctorUserMap = new Map(
+    doctorUsers.map(u => [u.user_id, sanitizeUser(u)])
+  );
+
+  return appointmentsList.map(appt => ({
     ...appt,
     user: appt.user ? sanitizeUser(appt.user) : undefined,
-    doctor: appt.doctor, // if needed, sanitize doctor separately
-  }))
-}
+    doctor: appt.doctor
+      ? {
+          ...appt.doctor,
+          user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
+        }
+      : undefined,
+  }));
+};
 
-// 🔹 Get appointments by user ID WITH user and doctor (sanitized)
+// 🔹 Get appointments by user ID WITH user and doctor (including doctor.user)
 export const getAppointmentsByUserIdService = async (
   userId: number
 ): Promise<SanitizedAppointment[]> => {
   const appointmentsList = await db.query.appointments.findMany({
     where: eq(appointments.user_id, userId),
+    orderBy: desc(appointments.created_at),
     with: {
       user: true,
       doctor: true,
@@ -42,16 +64,37 @@ export const getAppointmentsByUserIdService = async (
       payments: true,
       complaints: true,
     },
-  })
+  });
 
-  return appointmentsList.map((appt) => ({
+  const doctorUserIds = Array.from(
+    new Set(
+      appointmentsList
+        .filter(a => a.doctor?.user_id)
+        .map(a => a.doctor!.user_id)
+    )
+  );
+
+  const doctorUsers = await db.query.users.findMany({
+    where: inArray(users.user_id, doctorUserIds),
+  });
+
+  const doctorUserMap = new Map(
+    doctorUsers.map(u => [u.user_id, sanitizeUser(u)])
+  );
+
+  return appointmentsList.map(appt => ({
     ...appt,
     user: appt.user ? sanitizeUser(appt.user) : undefined,
-    doctor: appt.doctor,
-  }))
-}
+    doctor: appt.doctor
+      ? {
+          ...appt.doctor,
+          user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
+        }
+      : undefined,
+  }));
+};
 
-// 🔹 Get appointment by ID WITH user and doctor (sanitized)
+// 🔹 Get single appointment by ID
 export const getAppointmentByIdService = async (
   id: number
 ): Promise<SanitizedAppointment | null> => {
@@ -64,26 +107,42 @@ export const getAppointmentByIdService = async (
       payments: true,
       complaints: true,
     },
-  })
+  });
 
-  if (!appointment) return null
+  if (!appointment) return null;
+
+  let doctorUser = undefined;
+
+  if (appointment.doctor?.user_id) {
+    const doctorUserRaw = await db.query.users.findFirst({
+      where: eq(users.user_id, appointment.doctor.user_id),
+    });
+    if (doctorUserRaw) {
+      doctorUser = sanitizeUser(doctorUserRaw);
+    }
+  }
 
   return {
     ...appointment,
     user: appointment.user ? sanitizeUser(appointment.user) : undefined,
-    doctor: appointment.doctor,
-  }
-}
+    doctor: appointment.doctor
+      ? {
+          ...appointment.doctor,
+          user: doctorUser,
+        }
+      : undefined,
+  };
+};
 
-// 🔹 Create appointment
+// 🔹 Create new appointment
 export const createAppointmentService = async (
   data: TAppointmentInsert
 ): Promise<TAppointmentSelect> => {
-  const [inserted] = await db.insert(appointments).values(data).returning()
-  return inserted
-}
+  const [inserted] = await db.insert(appointments).values(data).returning();
+  return inserted;
+};
 
-// 🔹 Update status
+// 🔹 Update appointment status
 export const updateAppointmentStatusService = async (
   id: number,
   status: 'Pending' | 'Confirmed' | 'Cancelled'
@@ -91,10 +150,10 @@ export const updateAppointmentStatusService = async (
   await db
     .update(appointments)
     .set({ appointment_status: status, updated_at: new Date() })
-    .where(eq(appointments.appointment_id, id))
+    .where(eq(appointments.appointment_id, id));
 
-  return 'Appointment status updated'
-}
+  return 'Appointment status updated';
+};
 
 // 🔹 Delete appointment
 export const deleteAppointmentService = async (
@@ -102,7 +161,7 @@ export const deleteAppointmentService = async (
 ): Promise<boolean> => {
   const deleted = await db
     .delete(appointments)
-    .where(eq(appointments.appointment_id, id))
+    .where(eq(appointments.appointment_id, id));
 
-  return (deleted?.rowCount ?? 0) > 0
-}
+  return (deleted?.rowCount ?? 0) > 0;
+};

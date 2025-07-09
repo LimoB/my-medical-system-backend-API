@@ -10,6 +10,8 @@ import {
   getUserWelcomeEmail,
   getAdminWelcomeEmail,
 } from "@/emails";
+import db from "@/drizzle/db";
+import { doctors } from "@/drizzle/schema";
 
 // Allowed Roles
 const allowedRoles = ["user", "admin", "doctor"] as const;
@@ -20,7 +22,7 @@ export const sendWelcomeEmail = async (
   email: string,
   firstName: string,
   role: AllowedRole,
-  password?: string  // password optional for admin email
+  password?: string
 ): Promise<void> => {
   let emailContent;
   switch (role) {
@@ -87,20 +89,38 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       ? normalizedRole
       : "user";
 
-    // Create user in DB
-    const newUser = await createUserService({
-      first_name,
-      last_name,
-      email,
-      password: hashedPassword,
-      contact_phone: contact_phone || null,
-      address: address || null,
-      role: finalRole,
-      is_verified: false,
-      verification_token: verificationCode,
-      token_expiry: expiry,
-      created_at: new Date(),
-      updated_at: new Date(),
+    // Start DB transaction
+    const insertedUser = await db.transaction(async (tx) => {
+      // 1. Insert user
+      const users = await createUserService({
+        first_name,
+        last_name,
+        email,
+        password: hashedPassword,
+        contact_phone: contact_phone || null,
+        address: address || null,
+        role: finalRole,
+        is_verified: false,
+        verification_token: verificationCode,
+        token_expiry: expiry,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+      const newUser = users;
+
+      // 2. If doctor, insert into doctors table
+      if (finalRole === "doctor") {
+        await tx.insert(doctors).values({
+          user_id: newUser.user_id,
+          specialization: "",      // Default blank
+          available_days: "",      // Default blank
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+      }
+
+      return newUser;
     });
 
     // Compose verification email
@@ -111,10 +131,16 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       <p>Please enter this code to verify your account. It expires in <strong>10 minutes</strong>.</p>
     `;
 
-    // Send verification email with correct role heading
-    await sendHospitalEmail(email, first_name, verificationSubject, verificationBody, finalRole);
+    // Send verification email
+    await sendHospitalEmail(
+      email,
+      first_name,
+      verificationSubject,
+      verificationBody,
+      finalRole
+    );
 
-    // Respond to client
+    // Respond
     res.status(201).json({
       message: "Registration successful. A verification email has been sent.",
     });

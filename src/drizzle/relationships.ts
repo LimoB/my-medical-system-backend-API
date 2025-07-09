@@ -9,14 +9,14 @@ import {
 } from './schema';
 
 // === USERS ===
-export const usersRelations = relations(users, ({ one, many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   appointments: many(appointments),
   prescriptions: many(prescriptions),
   complaints: many(complaints),
   doctor: one(doctors, {
     fields: [users.user_id],
     references: [doctors.user_id],
-  }),
+  }), // ✅ Enables: with: { doctor: true }
 }));
 
 // === DOCTORS ===

@@ -1,13 +1,13 @@
-import { Request, Response, NextFunction } from 'express'
+import { Request, Response, NextFunction } from 'express';
 import {
   getDoctorsService,
   getDoctorByIdService,
   createDoctorService,
   updateDoctorService,
   deleteDoctorService,
-} from './doctor.service'
-import { newUserSchema, newDoctorSchema } from '@/validation/zodSchemas'
-import { z } from 'zod'
+} from './doctor.service';
+import { newDoctorSchema } from '@/validation/zodSchemas';
+import { z } from 'zod';
 
 // 🔹 GET /api/doctors
 export const getDoctors = async (
@@ -15,22 +15,20 @@ export const getDoctors = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  console.log('[GET] /api/doctors')
+  console.log('[GET] /api/doctors');
 
   try {
-    const doctors = await getDoctorsService()
-
+    const doctors = await getDoctorsService();
     if (!doctors.length) {
-      res.status(404).json({ message: 'No doctors found' })
-      return
+      res.status(404).json({ message: 'No doctors found' });
+      return;
     }
-
-    res.status(200).json(doctors)
+    res.status(200).json(doctors);
   } catch (error) {
-    console.error('getDoctors error:', error)
-    next(error)
+    console.error('❌ getDoctors error:', error);
+    next(error);
   }
-}
+};
 
 // 🔹 GET /api/doctors/:id
 export const getDoctorById = async (
@@ -38,28 +36,28 @@ export const getDoctorById = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const doctorId = parseInt(req.params.id, 10)
-  console.log(`[GET] /api/doctors/${req.params.id}`)
+  const doctorId = parseInt(req.params.id, 10);
+  console.log(`[GET] /api/doctors/${doctorId}`);
 
-  if (isNaN(doctorId)) {
-    res.status(400).json({ error: 'Invalid doctor ID' })
-    return
+  if (isNaN(doctorId) || doctorId <= 0) {
+    res.status(400).json({ error: 'Invalid doctor ID' });
+    return;
   }
 
   try {
-    const doctor = await getDoctorByIdService(doctorId)
+    const doctor = await getDoctorByIdService(doctorId);
 
     if (!doctor) {
-      res.status(404).json({ message: 'Doctor not found' })
-      return
+      res.status(404).json({ message: 'Doctor not found' });
+      return;
     }
 
-    res.status(200).json(doctor)
+    res.status(200).json(doctor);
   } catch (error) {
-    console.error('getDoctorById error:', error)
-    next(error)
+    console.error(`❌ getDoctorById error for ID ${doctorId}:`, error);
+    next(error);
   }
-}
+};
 
 // 🔹 POST /api/doctors
 export const createDoctor = async (
@@ -67,25 +65,22 @@ export const createDoctor = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  console.log('[POST] /api/doctors with body:', req.body)
+  console.log('[POST] /api/doctors with body:', req.body);
 
   try {
-    // Validate both user and doctor fields
-    const userData = newUserSchema.parse(req.body)
-    const doctorData = newDoctorSchema.parse(req.body)
-
-    const message = await createDoctorService({ ...userData, ...doctorData })
-    res.status(201).json({ message })
+    const doctorData = newDoctorSchema.parse(req.body);
+    const message = await createDoctorService(doctorData);
+    res.status(201).json({ message });
   } catch (error) {
-    console.error('createDoctor error:', error)
+    console.error('❌ createDoctor error:', error);
 
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: error.flatten() })
+      res.status(400).json({ error: error.flatten() });
     } else {
-      next(error)
+      next(error);
     }
   }
-}
+};
 
 // 🔹 PUT /api/doctors/:id
 export const updateDoctor = async (
@@ -93,35 +88,28 @@ export const updateDoctor = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const doctorId = parseInt(req.params.id, 10)
-  console.log(`[PUT] /api/doctors/${req.params.id} with:`, req.body)
+  const doctorId = parseInt(req.params.id, 10);
+  console.log(`[PUT] /api/doctors/${doctorId} with body:`, req.body);
 
-  if (isNaN(doctorId)) {
-    res.status(400).json({ error: 'Invalid doctor ID' })
-    return
+  if (isNaN(doctorId) || doctorId <= 0) {
+    res.status(400).json({ error: 'Invalid doctor ID' });
+    return;
   }
 
   try {
-    // Partial schema validation for patching fields
-    const parsedDoctor = newDoctorSchema.partial().parse(req.body)
-    const parsedUser = newUserSchema.partial().parse(req.body)
-
-    const message = await updateDoctorService(doctorId, {
-      ...parsedUser,
-      ...parsedDoctor,
-    })
-
-    res.status(200).json({ message })
+    const parsedDoctor = newDoctorSchema.partial().parse(req.body);
+    const message = await updateDoctorService(doctorId, parsedDoctor);
+    res.status(200).json({ message });
   } catch (error) {
-    console.error('updateDoctor error:', error)
+    console.error(`❌ updateDoctor error for ID ${doctorId}:`, error);
 
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: error.flatten() })
+      res.status(400).json({ error: error.flatten() });
     } else {
-      next(error)
+      next(error);
     }
   }
-}
+};
 
 // 🔹 DELETE /api/doctors/:id
 export const deleteDoctor = async (
@@ -129,24 +117,24 @@ export const deleteDoctor = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const doctorId = parseInt(req.params.id, 10)
-  console.log(`[DELETE] /api/doctors/${req.params.id}`)
+  const doctorId = parseInt(req.params.id, 10);
+  console.log(`[DELETE] /api/doctors/${doctorId}`);
 
-  if (isNaN(doctorId)) {
-    res.status(400).json({ error: 'Invalid doctor ID' })
-    return
+  if (isNaN(doctorId) || doctorId <= 0) {
+    res.status(400).json({ error: 'Invalid doctor ID' });
+    return;
   }
 
   try {
-    const deleted = await deleteDoctorService(doctorId)
+    const deleted = await deleteDoctorService(doctorId);
 
     if (deleted) {
-      res.status(200).json({ message: 'Doctor deleted successfully' })
+      res.status(200).json({ message: 'Doctor deleted successfully' });
     } else {
-      res.status(404).json({ message: 'Doctor not found or not deleted' })
+      res.status(404).json({ message: 'Doctor not found or not deleted' });
     }
   } catch (error) {
-    console.error('deleteDoctor error:', error)
-    next(error)
+    console.error(`❌ deleteDoctor error for ID ${doctorId}:`, error);
+    next(error);
   }
-}
+};
