@@ -27,6 +27,9 @@ export type TPaymentSelect = typeof payments.$inferSelect
 export type TComplaintInsert = typeof complaints.$inferInsert
 export type TComplaintSelect = typeof complaints.$inferSelect
 
+// ========== Payment Method Enum ==========
+export type PaymentMethod = 'stripe' | 'mpesa' | 'paypal' | 'cash' // must match schema enum
+
 // ========== Extended / Populated Types ==========
 
 export interface PopulatedUser extends TUserSelect {
@@ -58,7 +61,7 @@ export interface PopulatedDoctor extends TDoctorSelect {
 
 export interface PopulatedAppointment extends TAppointmentSelect {
   user?: TUserSelect
-  doctor?: PopulatedDoctor // ✅ include user inside doctor
+  doctor?: PopulatedDoctor
   prescriptions?: TPrescriptionSelect[]
   payments?: TPaymentSelect[]
   complaints?: TComplaintSelect[]
@@ -92,7 +95,7 @@ export type SanitizedUser = Omit<TUserSelect, SensitiveFields>
 // ✅ Full user profile sanitized
 export type SanitizedPopulatedUser = Omit<PopulatedUser, SensitiveFields>
 
-// ✅ Doctor sanitized (including embedded user and appointments)
+// ✅ Doctor sanitized
 export type SanitizedDoctor = Omit<PopulatedDoctor, 'user' | 'appointments' | 'prescriptions'> & {
   user?: SanitizedUser;
   appointments?: (Omit<PopulatedAppointment, 'user'> & {
@@ -103,7 +106,7 @@ export type SanitizedDoctor = Omit<PopulatedDoctor, 'user' | 'appointments' | 'p
   })[];
 };
 
-// ✅ Appointment sanitized (includes full doctor with user sanitized)
+// ✅ Appointment sanitized
 export type SanitizedAppointment = Omit<TAppointmentSelect, 'user_id' | 'doctor_id'> & {
   user?: SanitizedUser
   doctor?: SanitizedDoctor
@@ -135,4 +138,3 @@ export type SanitizedPopulatedComplaint = Omit<PopulatedComplaint, 'user' | 'app
   user?: SanitizedUser
   appointment?: TAppointmentSelect
 }
-

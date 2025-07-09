@@ -18,6 +18,8 @@ export const roleEnum = pgEnum('role', ['user', 'admin', 'doctor'])
 export const appointmentStatusEnum = pgEnum('appointment_status', ['Pending', 'Confirmed', 'Cancelled'])
 export const complaintStatusEnum = pgEnum('complaint_status', ['Open', 'In Progress', 'Resolved', 'Closed'])
 export const paymentStatusEnum = pgEnum('payment_status', ['Pending', 'Paid', 'Failed'])
+export const paymentMethodEnum = pgEnum('payment_method', ['stripe', 'mpesa', 'paypal', 'cash']);
+
 
 // ===== USERS =====
 export const users = pgTable('users', {
@@ -79,35 +81,29 @@ export const prescriptions = pgTable('prescriptions', {
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
-// ===== PAYMENTS =====
+
+
 export const payments = pgTable('payments', {
   payment_id: serial('payment_id').primaryKey(),
 
-  // Foreign key to the appointment this payment is for
   appointment_id: integer('appointment_id')
     .references(() => appointments.appointment_id)
     .notNull(),
 
-  // Total amount paid
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
 
-  // Enum: 'Pending' | 'Paid' | 'Failed'
   payment_status: paymentStatusEnum('payment_status').default('Pending'),
 
-  /**
-   * Stripe's session ID (e.g., "cs_test_123").
-   * Changed from UUID to VARCHAR to store the real Stripe session ID.
-   * Made UNIQUE to prevent duplicate payment records.
-   */
   transaction_id: varchar('transaction_id', { length: 255 }).notNull().unique(),
 
-  // When the payment was made
+  //  NEW: Payment Method
+  payment_method: paymentMethodEnum('payment_method').notNull(),
+
   payment_date: timestamp('payment_date', { withTimezone: true }).defaultNow(),
 
-  // Timestamps
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-})
+});
 
 
 // ===== COMPLAINTS =====

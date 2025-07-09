@@ -21,9 +21,9 @@ export const getPaymentsService = async (): Promise<SanitizedPayment[]> => {
       },
     })
 
-    const sanitized = result.map((payment) => ({
+    return result.map((payment) => ({
       ...payment,
-      appointment: {
+      appointment: payment.appointment && {
         ...payment.appointment,
         doctor: payment.appointment.doctor
           ? sanitizeUser(payment.appointment.doctor)
@@ -33,10 +33,8 @@ export const getPaymentsService = async (): Promise<SanitizedPayment[]> => {
           : undefined,
       },
     }))
-
-    return sanitized
   } catch (error) {
-    console.error('Error fetching payments:', error)
+    console.error('❌ Error fetching payments:', error)
     throw new Error('Unable to fetch payments')
   }
 }
@@ -60,9 +58,9 @@ export const getPaymentByIdService = async (
 
     if (!payment) return null
 
-    const sanitized: SanitizedPayment = {
+    return {
       ...payment,
-      appointment: {
+      appointment: payment.appointment && {
         ...payment.appointment,
         doctor: payment.appointment.doctor
           ? sanitizeUser(payment.appointment.doctor)
@@ -72,10 +70,8 @@ export const getPaymentByIdService = async (
           : undefined,
       },
     }
-
-    return sanitized
   } catch (error) {
-    console.error(`Error fetching payment with ID ${paymentId}:`, error)
+    console.error(`❌ Error fetching payment with ID ${paymentId}:`, error)
     throw new Error('Unable to fetch payment by ID')
   }
 }
@@ -87,11 +83,11 @@ export const createPaymentService = async (
   try {
     const result = await db.insert(payments).values(data).returning()
     if (result.length > 0) {
-      return 'Payment created successfully!'
+      return '✅ Payment created successfully!'
     }
     throw new Error('Payment creation failed')
   } catch (error) {
-    console.error('Error creating payment:', error)
+    console.error('❌ Error creating payment:', error)
     throw new Error('Unable to create payment')
   }
 }
@@ -109,11 +105,11 @@ export const updatePaymentService = async (
       .returning()
 
     if (result.length > 0) {
-      return 'Payment updated successfully!'
+      return '✅ Payment updated successfully!'
     }
     throw new Error('Payment update failed or payment not found')
   } catch (error) {
-    console.error(`Error updating payment with ID ${paymentId}:`, error)
+    console.error(`❌ Error updating payment with ID ${paymentId}:`, error)
     throw new Error('Unable to update payment')
   }
 }
@@ -130,7 +126,7 @@ export const deletePaymentService = async (
 
     return result.length > 0
   } catch (error) {
-    console.error(`Error deleting payment with ID ${paymentId}:`, error)
+    console.error(`❌ Error deleting payment with ID ${paymentId}:`, error)
     throw new Error('Unable to delete payment')
   }
 }
