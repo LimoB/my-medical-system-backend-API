@@ -9,17 +9,15 @@ import {
   date,
   time,
   decimal,
-  uuid,
   boolean,
 } from 'drizzle-orm/pg-core'
 
 // ===== ENUMS =====
-export const roleEnum = pgEnum('role', ['user', 'admin', 'doctor'])
-export const appointmentStatusEnum = pgEnum('appointment_status', ['Pending', 'Confirmed', 'Cancelled'])
-export const complaintStatusEnum = pgEnum('complaint_status', ['Open', 'In Progress', 'Resolved', 'Closed'])
-export const paymentStatusEnum = pgEnum('payment_status', ['Pending', 'Paid', 'Failed'])
+export const roleEnum = pgEnum('role', ['user', 'admin', 'doctor']);
+export const appointmentStatusEnum = pgEnum('appointment_status', ['Pending', 'Confirmed', 'Cancelled']);
+export const complaintStatusEnum = pgEnum('complaint_status', ['Open', 'In Progress', 'Resolved', 'Closed']);
+export const paymentStatusEnum = pgEnum('payment_status', ['Pending', 'Paid', 'Failed']);
 export const paymentMethodEnum = pgEnum('payment_method', ['stripe', 'mpesa', 'paypal', 'cash']);
-
 
 // ===== USERS =====
 export const users = pgTable('users', {
@@ -33,7 +31,6 @@ export const users = pgTable('users', {
   role: roleEnum('role').default('user').notNull(),
   image_url: text('image_url'),
 
-  // Email verification
   is_verified: boolean('is_verified').default(false).notNull(),
   verification_token: varchar('verification_token', { length: 255 }),
   token_expiry: timestamp('token_expiry', { withTimezone: true }),
@@ -41,7 +38,7 @@ export const users = pgTable('users', {
 
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-})
+});
 
 // ===== DOCTORS =====
 export const doctors = pgTable('doctors', {
@@ -52,7 +49,7 @@ export const doctors = pgTable('doctors', {
 
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-})
+});
 
 // ===== APPOINTMENTS =====
 export const appointments = pgTable('appointments', {
@@ -62,11 +59,11 @@ export const appointments = pgTable('appointments', {
   appointment_date: date('appointment_date').notNull(),
   time_slot: time('time_slot').notNull(),
   total_amount: decimal('total_amount', { precision: 10, scale: 2 }),
-  appointment_status: appointmentStatusEnum('appointment_status').default('Pending'),
+  appointment_status: appointmentStatusEnum('appointment_status').default('Pending').notNull(),
 
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-})
+});
 
 // ===== PRESCRIPTIONS =====
 export const prescriptions = pgTable('prescriptions', {
@@ -79,24 +76,20 @@ export const prescriptions = pgTable('prescriptions', {
 
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-})
+});
 
-
-
+// ===== PAYMENTS =====
 export const payments = pgTable('payments', {
   payment_id: serial('payment_id').primaryKey(),
 
-  appointment_id: integer('appointment_id')
-    .references(() => appointments.appointment_id)
-    .notNull(),
+  appointment_id: integer('appointment_id').references(() => appointments.appointment_id).notNull(),
 
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
 
-  payment_status: paymentStatusEnum('payment_status').default('Pending'),
+  payment_status: paymentStatusEnum('payment_status').default('Pending').notNull(),
 
   transaction_id: varchar('transaction_id', { length: 255 }).notNull().unique(),
 
-  //  NEW: Payment Method
   payment_method: paymentMethodEnum('payment_method').notNull(),
 
   payment_date: timestamp('payment_date', { withTimezone: true }).defaultNow(),
@@ -105,7 +98,6 @@ export const payments = pgTable('payments', {
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-
 // ===== COMPLAINTS =====
 export const complaints = pgTable('complaints', {
   complaint_id: serial('complaint_id').primaryKey(),
@@ -113,8 +105,8 @@ export const complaints = pgTable('complaints', {
   related_appointment_id: integer('related_appointment_id').references(() => appointments.appointment_id),
   subject: varchar('subject', { length: 255 }).notNull(),
   description: text('description').notNull(),
-  status: complaintStatusEnum('complaint_status').default('Open'),
+  status: complaintStatusEnum('complaint_status').default('Open').notNull(),
 
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-})
+});

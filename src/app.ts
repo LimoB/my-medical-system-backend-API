@@ -9,6 +9,7 @@ import appointmentsRouter from "@/appointments/appointment.route";
 import doctorRouter from "@/doctors/doctor.route";
 import paymentRouter from "@/payments/payment.route";
 import prescriptionRouter from "./prescriptions/prescription.route";
+import dashboardRouter from "./dashboard/dashboard.route";
 
 
 
@@ -46,6 +47,7 @@ app.use("/api", appointmentsRouter);
 app.use("/api", doctorRouter);
 app.use("/api", paymentRouter);
 app.use("/api", prescriptionRouter);
+app.use("/api", dashboardRouter);
 
 
 

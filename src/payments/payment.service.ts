@@ -14,30 +14,35 @@ export const getPaymentsService = async (): Promise<SanitizedPayment[]> => {
       with: {
         appointment: {
           with: {
-            doctor: true,
             user: true,
+            doctor: {
+              with: {
+                user: true,
+              },
+            },
           },
         },
       },
-    })
+    });
 
     return result.map((payment) => ({
       ...payment,
       appointment: payment.appointment && {
         ...payment.appointment,
-        doctor: payment.appointment.doctor
-          ? sanitizeUser(payment.appointment.doctor)
-          : undefined,
         user: payment.appointment.user
           ? sanitizeUser(payment.appointment.user)
           : undefined,
+        doctor: payment.appointment.doctor ?? undefined,
+        doctor_user: payment.appointment.doctor?.user
+          ? sanitizeUser(payment.appointment.doctor.user)
+          : undefined,
       },
-    }))
+    }));
   } catch (error) {
-    console.error('❌ Error fetching payments:', error)
-    throw new Error('Unable to fetch payments')
+    console.error('❌ Error fetching payments:', error);
+    throw new Error('Unable to fetch payments');
   }
-}
+};
 
 // 🔹 Get payment by ID with appointment + doctor & user (sanitized)
 export const getPaymentByIdService = async (
@@ -49,32 +54,37 @@ export const getPaymentByIdService = async (
       with: {
         appointment: {
           with: {
-            doctor: true,
             user: true,
+            doctor: {
+              with: {
+                user: true,
+              },
+            },
           },
         },
       },
-    })
+    });
 
-    if (!payment) return null
+    if (!payment) return null;
 
     return {
       ...payment,
       appointment: payment.appointment && {
         ...payment.appointment,
-        doctor: payment.appointment.doctor
-          ? sanitizeUser(payment.appointment.doctor)
-          : undefined,
         user: payment.appointment.user
           ? sanitizeUser(payment.appointment.user)
           : undefined,
+        doctor: payment.appointment.doctor ?? undefined,
+        doctor_user: payment.appointment.doctor?.user
+          ? sanitizeUser(payment.appointment.doctor.user)
+          : undefined,
       },
-    }
+    };
   } catch (error) {
-    console.error(`❌ Error fetching payment with ID ${paymentId}:`, error)
-    throw new Error('Unable to fetch payment by ID')
+    console.error(`❌ Error fetching payment with ID ${paymentId}:`, error);
+    throw new Error('Unable to fetch payment by ID');
   }
-}
+};
 
 // 🔹 Create a payment
 export const createPaymentService = async (
