@@ -1,11 +1,9 @@
-import { eq, desc, isNull } from 'drizzle-orm'; import db from '@/drizzle/db';
+import { eq, desc, isNull } from 'drizzle-orm';
+import db from '@/drizzle/db';
 import { users, doctors } from '@/drizzle/schema';
 import type { TDoctorInsert, SanitizedDoctor } from '@/drizzle/types';
 import { sanitizeUser } from '@/utils/sanitize';
-
 // 🔹 Get all doctors — includes users with role 'doctor' but may not yet have doctor profile
-
-// 🔹 Get all doctors — includes users with role 'doctor'
 export const getDoctorsService = async (): Promise<SanitizedDoctor[]> => {
   try {
     const result = await db.query.users.findMany({
@@ -30,20 +28,32 @@ export const getDoctorsService = async (): Promise<SanitizedDoctor[]> => {
         },
       },
       orderBy: [
-        desc(users.updated_at),        // ✅ fallback ordering
+        desc(users.updated_at), // fallback ordering
         desc(users.created_at),
-        desc(users.user_id),          // ✅ ensures latest registered are prioritized
+        desc(users.user_id), // ensures latest registered are prioritized
       ],
     });
 
     return result.map((user): SanitizedDoctor => {
       const doctor = user.doctor;
 
+      // Ensure available_hours is always an array
+      const available_hours = Array.isArray(doctor?.available_hours)
+        ? doctor?.available_hours
+        : [];
+
+      // Ensure payment_per_hour is a number (default to 0 if undefined)
+      const payment_per_hour = typeof doctor?.payment_per_hour === 'number'
+        ? doctor?.payment_per_hour
+        : 0;
+
       return {
         doctor_id: doctor?.doctor_id ?? 0,
         user_id: user.user_id,
         specialization: doctor?.specialization ?? '',
         available_days: doctor?.available_days ?? '',
+        available_hours, // Ensure this is included as an array
+        payment_per_hour, // Add payment per hour
         created_at: doctor?.created_at ?? null,
         updated_at: doctor?.updated_at ?? null,
         user: sanitizeUser(user),
@@ -69,6 +79,7 @@ export const getDoctorsService = async (): Promise<SanitizedDoctor[]> => {
 };
 
 
+// 🔹 Get doctor by ID
 // 🔹 Get doctor by ID
 export const getDoctorByIdService = async (
   doctorId: number
@@ -98,11 +109,23 @@ export const getDoctorByIdService = async (
 
     if (!doctor) return null;
 
+    // Ensure available_hours is always an array
+    const available_hours = Array.isArray(doctor?.available_hours)
+      ? doctor?.available_hours
+      : [];
+
+    // Ensure payment_per_hour is a number (default to 0 if undefined)
+    const payment_per_hour = typeof doctor?.payment_per_hour === 'number'
+      ? doctor?.payment_per_hour
+      : 0;
+
     return {
       doctor_id: doctor.doctor_id,
       user_id: doctor.user_id,
       specialization: doctor.specialization,
       available_days: doctor.available_days ?? '',
+      available_hours, // Ensure this is included as an array
+      payment_per_hour, // Add payment per hour
       created_at: doctor.created_at,
       updated_at: doctor.updated_at,
       user: doctor.user ? sanitizeUser(doctor.user) : undefined,
@@ -125,6 +148,7 @@ export const getDoctorByIdService = async (
     throw new Error('Unable to fetch doctor');
   }
 };
+
 
 // 🔹 Create new doctor
 export const createDoctorService = async (
@@ -157,7 +181,26 @@ export const createDoctorService = async (
         .where(eq(users.user_id, doctor.user_id));
     }
 
-    const result = await db.insert(doctors).values(doctor).returning();
+    // Validate required fields for doctor profile
+    if (!doctor.specialization || !doctor.available_days || !doctor.payment_per_hour) {
+      throw new Error('Doctor profile is incomplete. Please provide specialization, available days, and payment per hour.');
+    }
+
+    // Ensure that specialization, available days, and payment per hour are not empty or invalid
+    if (doctor.specialization.trim() === "" || doctor.available_days.trim() === "" || doctor.payment_per_hour <= 0) {
+      throw new Error("Doctor profile contains invalid data. Ensure all fields are filled correctly.");
+    }
+
+    // Optional: Set default values if some fields are missing
+    const doctorData = {
+      ...doctor,
+      available_days: doctor.available_days || 'Not Available', // Default value for available_days
+      available_hours: doctor.available_hours || [], // Default empty array for available_hours
+      payment_per_hour: doctor.payment_per_hour || 0, // Default payment per hour if not provided
+    };
+
+    // Insert the new doctor record without specifying doctor_id (let the database handle the ID)
+    const result = await db.insert(doctors).values(doctorData).returning();
 
     if (result.length === 0) {
       throw new Error('Doctor creation failed');
@@ -170,6 +213,7 @@ export const createDoctorService = async (
   }
 };
 
+
 // 🔹 Update doctor
 export const updateDoctorService = async (
   doctorId: number,
@@ -178,15 +222,45 @@ export const updateDoctorService = async (
   try {
     if (!doctorId || doctorId <= 0) throw new Error('Invalid doctor ID');
 
+    console.log('Received update for doctorId:', doctorId);
+    console.log('Updates being applied:', updates);  // This will log the data being passed
+
+    // Validate and clean data if needed
+    if (updates.available_days && typeof updates.available_days === 'string') {
+      updates.available_days = updates.available_days.trim();
+    }
+
+    if (updates.available_hours && Array.isArray(updates.available_hours)) {
+      updates.available_hours = updates.available_hours.filter(hour => typeof hour === 'string');
+    }
+
+    if (updates.payment_per_hour && typeof updates.payment_per_hour === 'number') {
+      updates.payment_per_hour = Math.max(0, updates.payment_per_hour);  // Ensure non-negative
+    }
+
+    // Log the final updates
+    console.log('Final updates:', updates);
+
+    // Ensure that there are changes to be updated
+    if (Object.keys(updates).length === 0) {
+      console.log('No updates provided, skipping database query');
+      return 'No changes to update.';
+    }
+
+    // Perform the update query
     const result = await db
       .update(doctors)
       .set(updates)
       .where(eq(doctors.doctor_id, doctorId))
       .returning();
 
+    // Check if the doctor was updated
     if (result.length === 0) {
+      console.error('No doctor updated, check doctor_id:', doctorId);
       throw new Error('Doctor update failed or doctor not found');
     }
+
+    console.log('Doctor updated successfully:', result[0]);
 
     return 'Doctor updated successfully!';
   } catch (error) {

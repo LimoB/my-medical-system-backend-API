@@ -24,10 +24,12 @@ export const newUserSchema = z.object({
 
 // ===== Doctor Schema =====
 export const newDoctorSchema = z.object({
-  user_id: z.number(), // required in db
-  specialization: z.string().min(1),
-  available_days: z.string().optional(), // assume JSON string of days
-})
+  user_id: z.number(),
+  specialization: z.string(),
+  available_days: z.string().optional(),
+  available_hours: z.array(z.string()).optional(), // Add this validation rule for available_hours
+  payment_per_hour: z.number().optional(), // Add this validation rule for payment_per_hour
+});
 
 // ===== Appointment Schema =====
 export const newAppointmentSchema = z.object({

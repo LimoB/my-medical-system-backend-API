@@ -45,6 +45,7 @@ export const getAllAppointmentsService = async (): Promise<SanitizedAppointment[
       ? {
           ...appt.doctor,
           user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
+          available_hours: Array.isArray(appt.doctor.available_hours) ? appt.doctor.available_hours : [], // Ensure available_hours is always a string[]
         }
       : undefined,
   }));
@@ -89,6 +90,7 @@ export const getAppointmentsByUserIdService = async (
       ? {
           ...appt.doctor,
           user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
+          available_hours: Array.isArray(appt.doctor.available_hours) ? appt.doctor.available_hours : [], // Ensure available_hours is always a string[]
         }
       : undefined,
   }));
@@ -129,6 +131,9 @@ export const getAppointmentByIdService = async (
       ? {
           ...appointment.doctor,
           user: doctorUser,
+          available_hours: Array.isArray(appointment.doctor.available_hours)
+            ? appointment.doctor.available_hours
+            : [], // Ensure available_hours is always a string[]
         }
       : undefined,
   };

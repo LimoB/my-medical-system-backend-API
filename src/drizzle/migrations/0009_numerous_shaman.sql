@@ -1,0 +1,1 @@
+ALTER TABLE "doctors" ADD COLUMN "payment_per_hour" integer NOT NULL;

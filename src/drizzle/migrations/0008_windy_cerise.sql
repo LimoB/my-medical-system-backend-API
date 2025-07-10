@@ -1,0 +1,1 @@
+ALTER TABLE "appointments" ADD COLUMN "payment_per_hour" numeric(10, 2) DEFAULT 0 NOT NULL;

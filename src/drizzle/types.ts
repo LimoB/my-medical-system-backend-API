@@ -12,8 +12,16 @@ import {
 export type TUserInsert = typeof users.$inferInsert;
 export type TUserSelect = typeof users.$inferSelect;
 
-export type TDoctorInsert = typeof doctors.$inferInsert;
-export type TDoctorSelect = typeof doctors.$inferSelect;
+export type TDoctorInsert = typeof doctors.$inferInsert & {
+  available_days?: string;  // Added available_days to the doctor insert
+  available_hours?: string[]; // Added available_hours to the doctor insert
+  payment_per_hour?: number; // Added payment_per_hour to the doctor insert
+};
+export type TDoctorSelect = typeof doctors.$inferSelect & {
+  available_days?: string;  // Added available_days to the doctor select
+  available_hours?: string[]; // Added available_hours to the doctor select
+  payment_per_hour?: number; // Added payment_per_hour to the doctor select
+};
 
 export type TAppointmentInsert = typeof appointments.$inferInsert;
 export type TAppointmentSelect = typeof appointments.$inferSelect;

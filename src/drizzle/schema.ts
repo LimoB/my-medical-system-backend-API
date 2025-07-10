@@ -49,10 +49,12 @@ export const doctors = pgTable('doctors', {
   specialization: varchar('specialization', { length: 150 }).notNull(), // Doctor's specialization
   available_days: varchar('available_days', { length: 255 }).notNull(),  // Days the doctor is available (e.g., "Monday, Tuesday, Friday")
   available_hours: jsonb('available_hours').default('[]'), // Correct usage of jsonb with default
+  payment_per_hour: integer('payment_per_hour').notNull(), // New field for payment per hour
 
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
+
 
 // ===== APPOINTMENTS =====
 export const appointments = pgTable('appointments', {
