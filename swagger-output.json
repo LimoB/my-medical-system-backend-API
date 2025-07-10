@@ -654,6 +654,239 @@
         }
       }
     },
+    "/dashboard/stats": {
+      "get": {
+        "summary": "Get dashboard summary statistics",
+        "tags": [
+          "Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Summary stats returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "totalUsers": {
+                      "type": "number"
+                    },
+                    "totalDoctors": {
+                      "type": "number"
+                    },
+                    "totalAppointmentsToday": {
+                      "type": "number"
+                    },
+                    "totalRevenueToday": {
+                      "type": "number"
+                    },
+                    "openComplaints": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/appointments/weekly": {
+      "get": {
+        "summary": "Get weekly appointment data (Mon-Fri)",
+        "tags": [
+          "Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Weekly appointment chart data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "appointments": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/appointments/status": {
+      "get": {
+        "summary": "Get appointment status distribution",
+        "tags": [
+          "Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pie chart data for appointment statuses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/satisfaction": {
+      "get": {
+        "summary": "Get patient satisfaction score",
+        "tags": [
+          "Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Satisfaction score as percentage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "score": {
+                      "type": "number",
+                      "description": "Percentage value (0-100)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/appointments/recent": {
+      "get": {
+        "summary": "Get recent appointments list",
+        "tags": [
+          "Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recent appointment data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "patient": {
+                        "type": "string"
+                      },
+                      "doctor": {
+                        "type": "string"
+                      },
+                      "date": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "time": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/complaints/recent": {
+      "get": {
+        "summary": "Get recent complaints list",
+        "tags": [
+          "Dashboard"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recent complaints data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "patient": {
+                        "type": "string"
+                      },
+                      "issue": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/doctors": {
       "get": {
         "summary": "Get all doctors",
@@ -1435,6 +1668,10 @@
     {
       "name": "Complaints",
       "description": "Complaint management endpoints"
+    },
+    {
+      "name": "Dashboard",
+      "description": "Admin dashboard analytics endpoints"
     },
     {
       "name": "Doctors",

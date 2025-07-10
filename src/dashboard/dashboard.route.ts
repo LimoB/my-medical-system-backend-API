@@ -10,22 +10,173 @@ import {
 
 const dashboardRouter = express.Router();
 
-// Main dashboard summary stats
-dashboardRouter.get('/stats', getStats);
+/**
+ * @swagger
+ * tags:
+ *   name: Dashboard
+ *   description: Admin dashboard analytics endpoints
+ */
 
-// Weekly appointments chart data
-dashboardRouter.get('/appointments/weekly', getWeeklyAppointmentsHandler);
+/**
+ * @swagger
+ * /dashboard/stats:
+ *   get:
+ *     summary: Get dashboard summary statistics
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Summary stats returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalUsers:
+ *                   type: number
+ *                 totalDoctors:
+ *                   type: number
+ *                 totalAppointmentsToday:
+ *                   type: number
+ *                 totalRevenueToday:
+ *                   type: number
+ *                 openComplaints:
+ *                   type: number
+ */
+dashboardRouter.get('/dashboard/stats', getStats);
 
-// Appointment status pie chart data
-dashboardRouter.get('/appointments/status', getAppointmentStatusHandler);
+/**
+ * @swagger
+ * /dashboard/appointments/weekly:
+ *   get:
+ *     summary: Get weekly appointment data (Mon-Fri)
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Weekly appointment chart data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   appointments:
+ *                     type: number
+ */
+dashboardRouter.get('/dashboard/appointments/weekly', getWeeklyAppointmentsHandler);
 
-// Patient satisfaction gauge data
-dashboardRouter.get('/satisfaction', getSatisfactionHandler);
+/**
+ * @swagger
+ * /dashboard/appointments/status:
+ *   get:
+ *     summary: Get appointment status distribution
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Pie chart data for appointment statuses
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   value:
+ *                     type: number
+ */
+dashboardRouter.get('/dashboard/appointments/status', getAppointmentStatusHandler);
 
-// Recent appointments list
-dashboardRouter.get('/appointments/recent', getRecentAppointmentsHandler);
+/**
+ * @swagger
+ * /dashboard/satisfaction:
+ *   get:
+ *     summary: Get patient satisfaction score
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Satisfaction score as percentage
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 score:
+ *                   type: number
+ *                   description: Percentage value (0-100)
+ */
+dashboardRouter.get('/dashboard/satisfaction', getSatisfactionHandler);
 
-// Recent complaints list
-dashboardRouter.get('/complaints/recent', getRecentComplaintsHandler);
+/**
+ * @swagger
+ * /dashboard/appointments/recent:
+ *   get:
+ *     summary: Get recent appointments list
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Recent appointment data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   patient:
+ *                     type: string
+ *                   doctor:
+ *                     type: string
+ *                   date:
+ *                     type: string
+ *                     format: date
+ *                   time:
+ *                     type: string
+ *                   status:
+ *                     type: string
+ */
+dashboardRouter.get('/dashboard/appointments/recent', getRecentAppointmentsHandler);
+
+/**
+ * @swagger
+ * /dashboard/complaints/recent:
+ *   get:
+ *     summary: Get recent complaints list
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Recent complaints data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   patient:
+ *                     type: string
+ *                   issue:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   status:
+ *                     type: string
+ */
+dashboardRouter.get('/dashboard/complaints/recent', getRecentComplaintsHandler);
 
 export default dashboardRouter;
