@@ -1,5 +1,5 @@
 import db from '@/drizzle/db';
-import { appointments, users } from '@/drizzle/schema';
+import { appointments, users, doctors } from '@/drizzle/schema';
 import { eq, desc, inArray } from 'drizzle-orm';
 import {
   TAppointmentInsert,
@@ -43,9 +43,9 @@ export const getAllAppointmentsService = async (): Promise<SanitizedAppointment[
     user: appt.user ? sanitizeUser(appt.user) : undefined,
     doctor: appt.doctor
       ? {
-          ...appt.doctor,
-          user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
-        }
+        ...appt.doctor,
+        user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
+      }
       : undefined,
   }));
 };
@@ -87,9 +87,9 @@ export const getAppointmentsByUserIdService = async (
     user: appt.user ? sanitizeUser(appt.user) : undefined,
     doctor: appt.doctor
       ? {
-          ...appt.doctor,
-          user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
-        }
+        ...appt.doctor,
+        user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
+      }
       : undefined,
   }));
 };
@@ -127,20 +127,77 @@ export const getAppointmentByIdService = async (
     user: appointment.user ? sanitizeUser(appointment.user) : undefined,
     doctor: appointment.doctor
       ? {
-          ...appointment.doctor,
-          user: doctorUser,
-        }
+        ...appointment.doctor,
+        user: doctorUser,
+      }
       : undefined,
   };
 };
 
+
+
+
 // 🔹 Create new appointment
+// 🔹 Create appointment service
 export const createAppointmentService = async (
   data: TAppointmentInsert
 ): Promise<TAppointmentSelect> => {
+  const { doctor_id, appointment_date, time_slot } = data;
+
+  // Check if the doctor is available on the given date and time
+  const doctor = await db.query.doctors.findFirst({
+    where: eq(doctors.doctor_id, doctor_id),
+  });
+
+  if (!doctor) {
+    throw new Error('Doctor not found');
+  }
+
+  // Type the available_hours as a string array
+  const availableHours: string[] = doctor.available_hours as string[];
+  const isSlotAvailable = availableHours.includes(time_slot);
+
+  if (!isSlotAvailable) {
+    throw new Error('This time slot is not available');
+  }
+
+  // Proceed with inserting the appointment
   const [inserted] = await db.insert(appointments).values(data).returning();
+
+  // Update the doctor's available hours after booking
+  await updateDoctorAvailability(doctor_id, appointment_date, time_slot);
+
   return inserted;
 };
+
+// 🔹 Update doctor's availability after appointment
+export const updateDoctorAvailability = async (
+  doctorId: number,
+  appointmentDate: string,
+  timeSlot: string
+) => {
+  const doctor = await db.query.doctors.findFirst({
+    where: eq(doctors.doctor_id, doctorId),
+  });
+
+  if (!doctor) {
+    throw new Error('Doctor not found');
+  }
+
+  const availableHours: string[] = doctor.available_hours as string[];
+  const updatedAvailableHours = availableHours.filter(
+    (slot: string) => slot !== timeSlot // Remove the booked time slot
+  );
+
+  await db
+    .update(doctors)
+    .set({
+      available_hours: updatedAvailableHours,
+    })
+    .where(eq(doctors.doctor_id, doctorId));
+};
+
+
 
 // 🔹 Update appointment status
 export const updateAppointmentStatusService = async (

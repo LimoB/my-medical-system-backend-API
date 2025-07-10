@@ -186,7 +186,7 @@ export async function getRecentComplaints(limit = 5) {
       subject: complaints.subject,
       description: complaints.description,
       status: complaints.status,
-      created_at: complaints.created_at,
+      created_at: complaints.created_at,  // Keep the created_at field
       patient_first_name: patientUser.first_name,
       patient_last_name: patientUser.last_name,
     })
@@ -200,5 +200,6 @@ export async function getRecentComplaints(limit = 5) {
     issue: r.subject,
     description: r.description,
     status: r.status,
+    created_at: r.created_at,  // Make sure to return the created_at field
   }));
 }
