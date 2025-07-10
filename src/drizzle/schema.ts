@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   pgTable,
   serial,
@@ -63,6 +64,7 @@ export const appointments = pgTable('appointments', {
   total_amount: decimal('total_amount', { precision: 10, scale: 2 }),
   appointment_status: appointmentStatusEnum('appointment_status').default('Pending').notNull(),
 
+  payment_per_hour: decimal('payment_per_hour', { precision: 10, scale: 2 }).notNull().default(sql`0`), 
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

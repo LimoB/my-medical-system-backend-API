@@ -59,8 +59,8 @@ export const getAppointmentById = async (
     // Access control: admin OR appointment user OR appointment doctor
     if (
       req.user?.role !== 'admin' &&
-      req.user?.userId !== appointment.user_id.toString() &&
-      req.user?.userId !== appointment.doctor_id.toString()
+      req.user?.userId !== appointment.user?.user_id.toString() &&
+      req.user?.userId !== appointment.doctor?.doctor_id.toString()
     ) {
       res.status(403).json({ error: 'Access denied' })
       return
@@ -131,7 +131,7 @@ export const updateAppointmentStatus = async (
     // Access control: admin or doctor assigned to this appointment
     if (
       req.user?.role !== 'admin' &&
-      req.user?.userId !== appointment.doctor_id.toString()
+      req.user?.userId !== appointment.doctor?.doctor_id.toString()
     ) {
       res.status(403).json({ error: 'Access denied' })
       return

@@ -43,9 +43,9 @@ export const getAllAppointmentsService = async (): Promise<SanitizedAppointment[
     user: appt.user ? sanitizeUser(appt.user) : undefined,
     doctor: appt.doctor
       ? {
-        ...appt.doctor,
-        user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
-      }
+          ...appt.doctor,
+          user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
+        }
       : undefined,
   }));
 };
@@ -87,9 +87,9 @@ export const getAppointmentsByUserIdService = async (
     user: appt.user ? sanitizeUser(appt.user) : undefined,
     doctor: appt.doctor
       ? {
-        ...appt.doctor,
-        user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
-      }
+          ...appt.doctor,
+          user: appt.doctor.user_id ? doctorUserMap.get(appt.doctor.user_id) : undefined,
+        }
       : undefined,
   }));
 };
@@ -127,18 +127,14 @@ export const getAppointmentByIdService = async (
     user: appointment.user ? sanitizeUser(appointment.user) : undefined,
     doctor: appointment.doctor
       ? {
-        ...appointment.doctor,
-        user: doctorUser,
-      }
+          ...appointment.doctor,
+          user: doctorUser,
+        }
       : undefined,
   };
 };
 
-
-
-
 // 🔹 Create new appointment
-// 🔹 Create appointment service
 export const createAppointmentService = async (
   data: TAppointmentInsert
 ): Promise<TAppointmentSelect> => {
@@ -189,23 +185,19 @@ export const updateDoctorAvailability = async (
     (slot: string) => slot !== timeSlot // Remove the booked time slot
   );
 
-  await db
-    .update(doctors)
+  await db.update(doctors)
     .set({
       available_hours: updatedAvailableHours,
     })
     .where(eq(doctors.doctor_id, doctorId));
 };
 
-
-
 // 🔹 Update appointment status
 export const updateAppointmentStatusService = async (
   id: number,
   status: 'Pending' | 'Confirmed' | 'Cancelled'
 ): Promise<string> => {
-  await db
-    .update(appointments)
+  await db.update(appointments)
     .set({ appointment_status: status, updated_at: new Date() })
     .where(eq(appointments.appointment_id, id));
 
@@ -213,11 +205,8 @@ export const updateAppointmentStatusService = async (
 };
 
 // 🔹 Delete appointment
-export const deleteAppointmentService = async (
-  id: number
-): Promise<boolean> => {
-  const deleted = await db
-    .delete(appointments)
+export const deleteAppointmentService = async (id: number): Promise<boolean> => {
+  const deleted = await db.delete(appointments)
     .where(eq(appointments.appointment_id, id));
 
   return (deleted?.rowCount ?? 0) > 0;
