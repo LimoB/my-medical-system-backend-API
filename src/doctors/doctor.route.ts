@@ -29,7 +29,7 @@ const doctorRouter = express.Router();
  *       200:
  *         description: List of doctors
  */
-doctorRouter.get('/doctors', adminAuth, getDoctors);
+doctorRouter.get('/doctors', getDoctors);
 
 /**
  * @swagger
@@ -84,7 +84,7 @@ doctorRouter.get('/doctors/:id', getDoctorById);
 doctorRouter.post(
   '/doctors',
   adminAuth,
-  validate({body:newDoctorSchema}),
+  validate({ body: newDoctorSchema }),
   createDoctor
 );
 
@@ -124,7 +124,7 @@ doctorRouter.post(
 doctorRouter.put(
   '/doctors/:id',
   adminAuth,
-  validate({ body:newDoctorSchema.partial()}), // all fields optional for update
+  validate({ body: newDoctorSchema.partial() }), // all fields optional for update
   updateDoctor
 );
 

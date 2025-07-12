@@ -4,6 +4,7 @@ import { users, doctors } from '@/drizzle/schema';
 import type { TDoctorInsert, SanitizedDoctor } from '@/drizzle/types';
 import { sanitizeUser } from '@/utils/sanitize';
 // 🔹 Get all doctors — includes users with role 'doctor' but may not yet have doctor profile
+// 🔹 Get all doctors — includes users with role 'doctor' but may not yet have doctor profile
 export const getDoctorsService = async (): Promise<SanitizedDoctor[]> => {
   try {
     const result = await db.query.users.findMany({
@@ -54,6 +55,7 @@ export const getDoctorsService = async (): Promise<SanitizedDoctor[]> => {
         available_days: doctor?.available_days ?? '',
         available_hours, // Ensure this is included as an array
         payment_per_hour, // Add payment per hour
+        description: doctor?.description ?? '', // Add description field
         created_at: doctor?.created_at ?? null,
         updated_at: doctor?.updated_at ?? null,
         user: sanitizeUser(user),
@@ -77,9 +79,6 @@ export const getDoctorsService = async (): Promise<SanitizedDoctor[]> => {
     throw new Error('Unable to fetch doctors');
   }
 };
-
-
-// 🔹 Get doctor by ID
 // 🔹 Get doctor by ID
 export const getDoctorByIdService = async (
   doctorId: number
@@ -126,6 +125,7 @@ export const getDoctorByIdService = async (
       available_days: doctor.available_days ?? '',
       available_hours, // Ensure this is included as an array
       payment_per_hour, // Add payment per hour
+      description: doctor.description ?? '', // Add description field
       created_at: doctor.created_at,
       updated_at: doctor.updated_at,
       user: doctor.user ? sanitizeUser(doctor.user) : undefined,
@@ -148,6 +148,9 @@ export const getDoctorByIdService = async (
     throw new Error('Unable to fetch doctor');
   }
 };
+
+
+
 
 
 // 🔹 Create new doctor

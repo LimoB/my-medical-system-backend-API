@@ -71,6 +71,20 @@
       "when": 1752153503096,
       "tag": "0009_numerous_shaman",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1752242547508,
+      "tag": "0010_spicy_kronos",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1752311642083,
+      "tag": "0011_flashy_squadron_supreme",
+      "breakpoints": true
     }
   ]
 }

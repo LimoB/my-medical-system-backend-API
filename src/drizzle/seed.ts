@@ -1,103 +1,83 @@
-import db from './db';
-import { createDoctorService } from '@/doctors/doctor.service';  // Adjust path to the service
-import { users } from '@/drizzle/schema';  // Import the users table
-import { doctors } from '@/drizzle/schema';  // Import the doctors table
-import { eq } from 'drizzle-orm';
+// import db from './db';
+// import { eq } from 'drizzle-orm';
+// import { doctors, appointments, users, paymentStatusEnum, paymentMethodEnum, appointmentStatusEnum, payments } from '@/drizzle/schema';  // Ensure correct imports
 
-// Predefined list of doctors to be seeded
-const doctorsData = [
-  {
-    user_id: 6,  // Dr. Bob Brown
-    specialization: 'Cardiologist',
-    available_days: 'Monday, Wednesday, Friday',
-    available_hours: ['09:00', '10:00', '11:00'],
-    payment_per_hour: 150,
-  },
-  {
-    user_id: 7,  // Dr. Charlie Clark
-    specialization: 'Pediatrician',
-    available_days: 'Tuesday, Thursday',
-    available_hours: ['08:00', '09:00', '10:00'],
-    payment_per_hour: 120,
-  },
-  {
-    user_id: 8,  // Dr. Dana Davis
-    specialization: 'Dermatologist',
-    available_days: 'Monday, Wednesday, Friday',
-    available_hours: ['10:00', '11:00', '12:00'],
-    payment_per_hour: 100,
-  },
-  {
-    user_id: 12,  // Dr. Limo Boaz
-    specialization: 'Orthopedic Surgeon',
-    available_days: 'Tuesday, Thursday',
-    available_hours: ['14:00', '15:00', '16:00'],
-    payment_per_hour: 180,
-  },
-  {
-    user_id: 14,  // Dr. Rofine Achieng
-    specialization: 'Neurologist',
-    available_days: 'Monday, Wednesday',
-    available_hours: ['08:00', '09:00', '10:00'],
-    payment_per_hour: 200,
-  },
-  {
-    user_id: 15,  // Dr. Boaz Limo15
-    specialization: 'General Practitioner',
-    available_days: 'Monday, Friday',
-    available_hours: ['09:00', '10:00', '11:00'],
-    payment_per_hour: 120,
-  },
-  {
-    user_id: 18,  // Dr. Joseph Mwangaza
-    specialization: 'Psychiatrist',
-    available_days: 'Monday, Thursday',
-    available_hours: ['10:00', '11:00', '12:00'],
-    payment_per_hour: 250,
-  },
-  {
-    user_id: 21,  // Dr. Dominic Kosgei
-    specialization: 'Surgeon',
-    available_days: 'Tuesday, Thursday',
-    available_hours: ['08:00', '09:00', '10:00'],
-    payment_per_hour: 220,
-  },
-];
+// const patients = [
+//   { user_id: 5, first_name: "Alice", last_name: "Anderson" },
+//   { user_id: 21, first_name: "Dominic", last_name: "Kosgei" },
+// ];
 
-const seedDatabase = async () => {
-  try {
-    // Step 1: Delete all existing doctors from the table (optional: could filter by user_id)
-    await db.delete(doctors).where(eq(doctors.user_id, 0)); // Deletes all doctors with user_id 0, can refine this filter if needed
+// const seedAppointmentsAndPayments = async () => {
+//   try {
+//     // Fetch all doctors
+//     const allDoctors = await db.query.doctors.findMany();
 
-    console.log('Existing doctors deleted.');
+//     // Loop through each doctor and create appointments
+//     for (const doctor of allDoctors) {
+//       // Fetch the doctor’s user record to get the first_name and last_name
+//       const doctorUser = await db.query.users.findFirst({
+//         where: eq(users.user_id, doctor.user_id),
+//       });
 
-    // Step 2: Loop through each doctor and create the doctor profile
-    for (const doctor of doctorsData) {
-      // Check if the doctor already exists in the database
-      const existingDoctor = await db.query.doctors.findFirst({
-        where: eq(doctors.user_id, doctor.user_id),
-      });
+//       const doctorName = `${doctorUser?.first_name} ${doctorUser?.last_name}`;
+//       const availableDays = doctor.available_days.split(', ');
+//       const availableHours = doctor.available_hours as string[];
 
-      if (existingDoctor) {
-        console.log(`Doctor with user_id ${doctor.user_id} already exists.`);
-        continue; // Skip if doctor exists
-      }
+//       // Fetch available patients
+//       const availablePatients = patients;
 
-      // Create the doctor profile
-      await createDoctorService(doctor);
-      console.log(`Successfully created doctor with user_id ${doctor.user_id}`);
-    }
+//       for (const day of availableDays) {
+//         for (const hour of availableHours) {
+//           // Assign a random patient to this time slot
+//           const patient = availablePatients[Math.floor(Math.random() * availablePatients.length)];
 
-    console.log('Seeding completed successfully!');
-  } catch (error) {
-    // Type guard to check if it's an instance of Error
-    if (error instanceof Error) {
-      console.error('❌ Error during seeding:', error.message);
-    } else {
-      console.error('❌ Unknown error during seeding');
-    }
-  }
-};
+//           const appointmentDate = new Date();
+//           appointmentDate.setDate(appointmentDate.getDate() + 7);  // Schedule 1 week from now
+//           const formattedDate = appointmentDate.toISOString().split('T')[0];  // Format as YYYY-MM-DD
 
-// Call the seed function to populate the database
-seedDatabase();
+//           // Create the appointment data
+//           const appointmentData = {
+//             user_id: patient.user_id,
+//             doctor_id: doctor.doctor_id,
+//             appointment_date: formattedDate,
+//             time_slot: hour,
+//             total_amount: (doctor.payment_per_hour * 1).toString(),  // Convert total_amount to string
+//             appointment_status: appointmentStatusEnum.Pending,  // Use the enum, not string
+//             payment_per_hour: doctor.payment_per_hour.toString(),  // Convert to string
+//           };
+
+//           // Insert the appointment data into the database
+//           const appointment = await db.insert(appointments).values(appointmentData).returning();
+//           const appointmentId = appointment[0].appointment_id;
+
+//           console.log(`Appointment scheduled with Dr. ${doctorName} for patient ${patient.first_name} ${patient.last_name} on ${formattedDate} at ${hour}.`);
+
+//           // Seed payment for this appointment
+//           const paymentData = {
+//             appointment_id: appointmentId,  // Use the actual appointment ID
+//             amount: (doctor.payment_per_hour * 1).toString(),  // Convert amount to string
+//             payment_status: paymentStatusEnum.Pending,  // Use the enum, not string
+//             transaction_id: `txn-${Math.random().toString(36).substr(2, 9)}`,  // Generate a random transaction ID
+//             payment_method: paymentMethodEnum[Math.floor(Math.random() * paymentMethodEnum.length)],  // Random payment method from the enum
+//             payment_date: new Date().toISOString(),
+//           };
+
+//           // Insert the payment data into the database
+//           await db.insert(payments).values(paymentData);
+//           console.log(`Payment scheduled for Appointment ID: ${appointmentId} with status Pending.`);
+//         }
+//       }
+//     }
+
+//     console.log('Appointments and payments seeded successfully!');
+//   } catch (error) {
+//     if (error instanceof Error) {
+//       console.error('❌ Error during appointment and payment seeding:', error.message);
+//     } else {
+//       console.error('❌ Unknown error during appointment and payment seeding');
+//     }
+//   }
+// };
+
+// // Call the function to seed appointments and payments
+// seedAppointmentsAndPayments();

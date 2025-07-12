@@ -60,7 +60,6 @@ export const getDoctorById = async (
 };
 
 // 🔹 POST /api/doctors
-// 🔹 POST /api/doctors
 export const createDoctor = async (
   req: Request,
   res: Response,
@@ -78,6 +77,7 @@ export const createDoctor = async (
       available_days: doctorData.available_days ?? '', // Ensure available_days is always a string
       available_hours: doctorData.available_hours ?? [], // Ensure available_hours is always an array
       payment_per_hour: doctorData.payment_per_hour ?? 0, // Ensure payment_per_hour defaults to 0
+      description: doctorData.description ?? '', // Ensure description is added if provided
     };
 
     // Pass the formatted data to the service for doctor creation
@@ -97,7 +97,6 @@ export const createDoctor = async (
   }
 };
 
-// 🔹 PUT /api/doctors/:id
 // 🔹 PUT /api/doctors/:id
 export const updateDoctor = async (
   req: Request,
@@ -126,6 +125,7 @@ export const updateDoctor = async (
       throw new Error('available_hours should be an array');
     }
 
+    // Ensure description is correctly handled
     const message = await updateDoctorService(doctorId, parsedDoctor);
     res.status(200).json({ message });
   } catch (error) {
@@ -138,7 +138,6 @@ export const updateDoctor = async (
     }
   }
 };
-
 
 // 🔹 DELETE /api/doctors/:id
 export const deleteDoctor = async (

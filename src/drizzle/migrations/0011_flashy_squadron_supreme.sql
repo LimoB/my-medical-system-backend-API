@@ -1,0 +1,1 @@
+ALTER TABLE "doctors" ALTER COLUMN "available_hours" SET DEFAULT '[]'::jsonb;

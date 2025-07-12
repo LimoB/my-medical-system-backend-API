@@ -11,7 +11,7 @@ import { adminAuth, anyRoleAuth } from '@/middleware/bearAuth';
 
 
 import validate from '@/middleware/validate';
-import { newUserSchema } from '@/validation/zodSchemas';
+import { newUserSchema, updateUserSchema, updateUserRoleSchema } from '@/validation/zodSchemas';
 
 const userRouter = express.Router();
 
@@ -65,7 +65,7 @@ userRouter.get('/users', adminAuth, getUsers);
  *       201:
  *         description: User created
  */
-userRouter.post('/users', validate({body: newUserSchema}),createUser);
+userRouter.post('/users', validate({ body: newUserSchema }), createUser);
 
 /**
  * @swagger
@@ -123,7 +123,12 @@ userRouter.get('/users/:id', anyRoleAuth, getUserById);
  *       404:
  *         description: User not found
  */
-userRouter.put('/users/:id', anyRoleAuth, validate({body: newUserSchema}), updateUser);
+userRouter.put(
+  '/users/:id',
+  anyRoleAuth,
+  validate({ body: [updateUserSchema, updateUserRoleSchema] }),
+  updateUser
+);
 
 /**
  * @swagger
