@@ -73,16 +73,16 @@ export const updateUserService = async (
   user: Partial<TUserInsert>
 ): Promise<string> => {
   try {
-    // 🔍 Ensure no undefined values are sent to Drizzle
     const cleanedUser = Object.fromEntries(
       Object.entries(user).filter(([_, v]) => v !== undefined)
     );
 
     console.log('🧾 Final payload being saved to DB:', cleanedUser);
+    console.log('🖼 image_url to update:', cleanedUser.image_url); // Optional
 
     const result = await db
       .update(users)
-      .set(cleanedUser) // ⬅ only defined values
+      .set(cleanedUser)
       .where(eq(users.user_id, userId))
       .returning();
 
@@ -96,6 +96,7 @@ export const updateUserService = async (
     throw new Error('Unable to update user');
   }
 };
+
 
 
 // 🔹 Delete a user

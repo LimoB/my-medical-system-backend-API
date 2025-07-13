@@ -6,7 +6,6 @@ import {
   updateUserService,
   deleteUserService,
 } from '@/users/user.service';
-import { sanitizeUser } from '@/utils/sanitize';
 import {
   newUserSchema,
   updateUserSchema,
@@ -32,9 +31,10 @@ export const getUsers = async (
       return res.status(404).json({ message: 'No users found' });
     }
 
+    console.log(`✅ Fetched ${users.length} users`);
     return res.status(200).json(users);
   } catch (error) {
-    console.error('Error in getUsers:', error);
+    console.error('❌ Error in getUsers:', error);
     return next(error);
   }
 };
@@ -66,9 +66,10 @@ export const getUserById = async (
       return res.status(404).json({ message: 'User not found' });
     }
 
+    console.log(`✅ Found user ${userId}:`, user);
     return res.status(200).json(user);
   } catch (error) {
-    console.error('Error in getUserById:', error);
+    console.error('❌ Error in getUserById:', error);
     return next(error);
   }
 };
@@ -79,21 +80,25 @@ export const createUser = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log('POST /api/users', req.body);
+  console.log('POST /api/users hit');
+  console.log('Payload:', req.body);
 
   try {
-    const validated = newUserSchema.parse(req.body); // includes image_url
+    const validated = newUserSchema.parse(req.body);
+    console.log('✅ Validated new user:', validated);
+
     const message = await createUserService(validated);
     return res.status(201).json({ message });
   } catch (error) {
     if (error instanceof ZodError) {
+      console.warn('⚠️ Validation failed:', error.flatten().fieldErrors);
       return res.status(400).json({
         error: 'Validation failed',
         details: error.flatten().fieldErrors,
       });
     }
 
-    console.error('Error in createUser:', error);
+    console.error('❌ Error in createUser:', error);
     return next(error);
   }
 };
@@ -109,7 +114,7 @@ export const updateUser = async (
   const currentUserRole = req.user?.role;
 
   console.log(`PUT /api/users/${userId} hit`);
-  console.log('Payload:', req.body);
+  console.log('🔄 Payload:', req.body);
 
   if (isNaN(userId)) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -122,28 +127,55 @@ export const updateUser = async (
     return res.status(403).json({ error: 'Access denied' });
   }
 
-  const isRoleOnlyUpdate = Object.keys(req.body).length === 1 && 'role' in req.body;
+  const {
+    first_name,
+    last_name,
+    email,
+    contact_phone,
+    address,
+    role,
+    is_verified,
+    image_url,
+  } = req.body;
 
-  if (isRoleOnlyUpdate && !isAdmin) {
+  console.log('🧪 Extracted Fields:', {
+    first_name,
+    last_name,
+    email,
+    contact_phone,
+    address,
+    role,
+    is_verified,
+    image_url,
+  });
+
+  if (role && !isAdmin) {
     return res.status(403).json({ error: 'Only admins can change roles' });
   }
 
+  const updateFields = {
+    first_name,
+    last_name,
+    email,
+    contact_phone,
+    address,
+    role,
+    is_verified,
+    image_url,
+  };
+
+  const hasFields = Object.values(updateFields).some((v) => v !== undefined);
+  if (!hasFields) {
+    return res.status(400).json({ error: 'No fields provided for update' });
+  }
+
   try {
-    const validated = isRoleOnlyUpdate
-      ? updateUserRoleSchema.parse(req.body)
-      : updateUserSchema.parse(req.body); // includes image_url
-
-    const message = await updateUserService(userId, validated);
-    return res.status(200).json({ message });
+    console.log('🧾 Sending fields to updateUserService:', updateFields);
+    const result = await updateUserService(userId, updateFields);
+    console.log(`✅ User ${userId} updated successfully`);
+    return res.status(200).json({ message: result });
   } catch (error) {
-    if (error instanceof ZodError) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: error.flatten().fieldErrors,
-      });
-    }
-
-    console.error('Error in updateUser:', error);
+    console.error('❌ Error in updateUser:', error);
     return next(error);
   }
 };
@@ -171,9 +203,10 @@ export const deleteUser = async (
       return res.status(404).json({ message: 'User not found or failed to delete' });
     }
 
+    console.log(`✅ User ${userId} deleted`);
     return res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error('Error in deleteUser:', error);
+    console.error('❌ Error in deleteUser:', error);
     return next(error);
   }
 };

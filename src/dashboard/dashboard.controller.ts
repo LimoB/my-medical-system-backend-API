@@ -4,9 +4,13 @@ import {
   getWeeklyAppointments,
   getAppointmentStatusCounts,
   getSatisfactionScore,
-  getRecentAppointments,
-  getRecentComplaints,
+  
 } from './dashboard.service';
+
+
+import { getRecentAppointments } from "./services/recentAppointments";
+import { getRecentComplaints } from "./services/RecentComplaints";
+
 
 export async function getStats(req: Request, res: Response) {
   try {
