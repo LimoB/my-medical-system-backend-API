@@ -11,10 +11,10 @@ declare global {
 }
 
 // === ROLES ===
-type UserRole = 'user' | 'admin' | 'doctor';
+export type UserRole = 'user' | 'admin' | 'doctor';
 
 // === Token Payload ===
-type DecodedToken = {
+export type DecodedToken = {
   userId: number;
   email: string;
   role: UserRole;
@@ -22,30 +22,49 @@ type DecodedToken = {
 };
 
 // === Generate 6-digit verification code ===
-export const generateVerificationCode = (): string => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
+export const generateVerificationCode = (): string =>
+  Math.floor(100000 + Math.random() * 900000).toString();
 
-// === Generate Access Token ===
+// === Sign Token ===
 export const signToken = (
   payload: DecodedToken,
   secret: string,
   expiresIn: StringValue = '1h'
 ): string => {
   const options: SignOptions = { expiresIn };
-  console.log(`[signToken] Signing token for userId=${payload.userId} with expiry=${expiresIn}`);
+  console.log(`[signToken] Signing token for userId=${payload.userId}`);
   return jwt.sign(payload, secret, options);
 };
 
-// === Generate Refresh Token ===
+// === Sign Refresh Token ===
 export const signRefreshToken = (
   payload: Pick<DecodedToken, 'userId' | 'email' | 'role'>,
   secret: string,
   expiresIn: StringValue = '7d'
 ): string => {
   const options: SignOptions = { expiresIn };
-  console.log(`[signRefreshToken] Signing refresh token for userId=${payload.userId} with expiry=${expiresIn}`);
+  console.log(`[signRefreshToken] Signing refresh token for userId=${payload.userId}`);
   return jwt.sign(payload, secret, options);
+};
+
+// === Normalize Decoded Token ===
+const normalizeDecodedToken = (raw: any): DecodedToken | null => {
+  const userIdRaw = raw.userId ?? raw.id;
+  const userId = typeof userIdRaw === 'string' ? parseInt(userIdRaw, 10) : userIdRaw;
+
+  const decoded: DecodedToken = {
+    userId,
+    email: raw.email,
+    role: raw.role,
+    exp: raw.exp,
+  };
+
+  if (!decoded.userId || !decoded.email || !decoded.role) {
+    console.error('[normalizeDecodedToken] Missing fields:', raw);
+    return null;
+  }
+
+  return decoded;
 };
 
 // === Verify Access Token ===
@@ -54,30 +73,8 @@ export const verifyToken = (
   secret: string
 ): DecodedToken | null => {
   try {
-    const decodedRaw = jwt.verify(token, secret) as any;
-    console.log('[verifyToken] Raw decoded token:', decodedRaw);
-
-    const userIdRaw = decodedRaw.userId ?? decodedRaw.id;
-    const userId = typeof userIdRaw === 'string' ? parseInt(userIdRaw, 10) : userIdRaw;
-
-    const decoded: DecodedToken = {
-      userId: userId,
-      email: decodedRaw.email,
-      role: decodedRaw.role,
-      exp: decodedRaw.exp,
-    };
-
-    if (
-      typeof decoded.userId !== 'number' ||
-      !decoded.email ||
-      !decoded.role
-    ) {
-      console.error('[verifyToken] Token missing required fields:', decodedRaw);
-      return null;
-    }
-
-    console.log('[verifyToken] Normalized decoded token:', decoded);
-    return decoded;
+    const raw = jwt.verify(token, secret);
+    return normalizeDecodedToken(raw);
   } catch (err) {
     console.error('[verifyToken] Invalid or expired token:', err);
     return null;
@@ -90,32 +87,10 @@ export const verifyRefreshToken = (
   secret: string
 ): DecodedToken | null => {
   try {
-    const decodedRaw = jwt.verify(token, secret) as any;
-    console.log('[verifyRefreshToken] Raw decoded refresh token:', decodedRaw);
-
-    const userIdRaw = decodedRaw.userId ?? decodedRaw.id;
-    const userId = typeof userIdRaw === 'string' ? parseInt(userIdRaw, 10) : userIdRaw;
-
-    const decoded: DecodedToken = {
-      userId: userId,
-      email: decodedRaw.email,
-      role: decodedRaw.role,
-      exp: decodedRaw.exp,
-    };
-
-    if (
-      typeof decoded.userId !== 'number' ||
-      !decoded.email ||
-      !decoded.role
-    ) {
-      console.error('[verifyRefreshToken] Refresh token missing required fields:', decodedRaw);
-      return null;
-    }
-
-    console.log('[verifyRefreshToken] Normalized decoded refresh token:', decoded);
-    return decoded;
+    const raw = jwt.verify(token, secret);
+    return normalizeDecodedToken(raw);
   } catch (err) {
-    console.error('[verifyRefreshToken] ❌ Invalid or expired refresh token:', err);
+    console.error('[verifyRefreshToken] Invalid or expired refresh token:', err);
     return null;
   }
 };
@@ -125,35 +100,26 @@ const authMiddlewareFactory = (allowedRoles: UserRole | UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const authHeader = req.header('Authorization');
     if (!authHeader) {
-      console.log('[authMiddleware] Authorization header is missing');
-      res.status(401).json({ error: 'Authorization header is missing' });
-      return;
+      console.warn('[authMiddleware] Authorization header missing');
+       res.status(401).json({ error: 'Missing authorization token' });
+       return;
     }
 
-    const token = authHeader.startsWith('Bearer ')
-      ? authHeader.slice(7)
-      : authHeader;
-
-    console.log('[authMiddleware] Extracted token:', token);
-
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
     const decoded = verifyToken(token, process.env.JWT_SECRET as string);
+
     if (!decoded) {
-      console.log('[authMiddleware] Token verification failed');
-      res.status(401).json({ error: 'Invalid or expired token' });
-      return;
+     res.status(401).json({ error: 'Invalid or expired token' });
+
+     return;
     }
 
-    console.log('[authMiddleware] Decoded token:', decoded);
-
-    const { role } = decoded;
     const allowed = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+    if (!allowed.includes(decoded.role)) {
+      console.warn(`[authMiddleware] Access denied. Role '${decoded.role}' not in ${allowed}`);
+       res.status(403).json({ error: 'Access denied' });
 
-    console.log('[authMiddleware] Allowed roles:', allowed);
-
-    if (!allowed.includes(role)) {
-      console.log(`[authMiddleware] Access denied: user role '${role}' not in allowed roles`);
-      res.status(403).json({ error: 'Access denied: insufficient role' });
-      return;
+       return;
     }
 
     req.user = decoded;
@@ -161,7 +127,7 @@ const authMiddlewareFactory = (allowedRoles: UserRole | UserRole[]) => {
   };
 };
 
-// === Exported Role Middleware ===
+// === Export Role-Based Middlewares ===
 export const userAuth = authMiddlewareFactory('user');
 export const adminAuth = authMiddlewareFactory('admin');
 export const doctorAuth = authMiddlewareFactory('doctor');

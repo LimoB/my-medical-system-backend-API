@@ -71,7 +71,8 @@ export const newAppointmentSchema = z.object({
     .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
       message: 'Time must be in HH:MM format',
     }),
-  total_amount: z.coerce.number().positive().optional(),
+  total_amount: z.coerce.number().positive(),  // required
+  payment_per_hour: z.coerce.number().nonnegative().default(0), // required with default 0
   appointment_status: appointmentStatusEnum.optional().default('Pending'),
 });
 
