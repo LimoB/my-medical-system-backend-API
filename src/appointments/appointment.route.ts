@@ -5,15 +5,15 @@ import {
   createAppointment,
   updateAppointmentStatus,
   deleteAppointment,
-  getAppointmentsByUser, // ✅ new controller
+  getAppointmentsByUser,
+  getAppointmentsByDoctor, // ✅ import added
 } from './appointment.controller';
 
 import {
   adminAuth,
-  userAuth,
-  doctorAuth,
   anyRoleAuth,
   adminOrDoctorAuth,
+  doctorAuth,
 } from '@/middleware/bearAuth';
 
 import validate from '@/middleware/validate';
@@ -39,6 +39,19 @@ appointmentsRouter.get(
   getAppointments
 );
 
+
+// 🔹 Get appointments for logged-in doctor (Doctor only)
+appointmentsRouter.get(
+  '/appointments/doctor',
+  doctorAuth,
+  (req, res, next) => {
+    console.log('Accessing GET /appointments/doctor by user:', req.user);
+    next();
+  },
+  getAppointmentsByDoctor
+);
+
+
 // 🔹 Get appointment by ID (Admin, user who booked, or doctor)
 appointmentsRouter.get(
   '/appointments/:id',
@@ -50,7 +63,18 @@ appointmentsRouter.get(
   getAppointmentById
 );
 
-// 🔹 Create appointment (Authenticated user/doctor)
+// 🔹 Get appointments by user ID (Admin or the user themself)
+appointmentsRouter.get(
+  '/appointments/user/:userId',
+  anyRoleAuth,
+  (req, res, next) => {
+    console.log(`Accessing GET /appointments/user/${req.params.userId} by:`, req.user);
+    next();
+  },
+  getAppointmentsByUser
+);
+
+// 🔹 Create appointment (Authenticated user or doctor)
 appointmentsRouter.post(
   '/appointments',
   anyRoleAuth,
@@ -83,17 +107,6 @@ appointmentsRouter.delete(
     next();
   },
   deleteAppointment
-);
-
-// 🔹 Get appointments by user ID (Admin or the user themself)
-appointmentsRouter.get(
-  '/appointments/user/:userId',
-  anyRoleAuth,
-  (req, res, next) => {
-    console.log(`Accessing GET /appointments/user/${req.params.userId} by:`, req.user);
-    next();
-  },
-  getAppointmentsByUser
 );
 
 export default appointmentsRouter;

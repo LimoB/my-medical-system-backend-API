@@ -97,6 +97,8 @@ export interface PopulatedComplaint extends TComplaintSelect {
 
 // ========== Sanitized Variants ==========
 
+// ========== Sanitized Variants ==========
+
 type SensitiveFields = 'password' | 'verification_token' | 'token_expiry';
 
 // ✅ User base sanitized
@@ -116,8 +118,10 @@ export type SanitizedDoctor = Omit<PopulatedDoctor, 'user' | 'appointments' | 'p
   })[];
 };
 
-// ✅ Appointment sanitized
-export type SanitizedAppointment = Omit<TAppointmentSelect, 'user_id' | 'doctor_id'> & {
+// ✅ Appointment sanitized (🛠️ Now includes doctor_id & user_id for auth checks)
+export type SanitizedAppointment = Omit<TAppointmentSelect, 'user' | 'doctor'> & {
+  doctor_id: number;
+  user_id: number;
   user?: SanitizedUser;
   doctor?: SanitizedDoctor;
   prescriptions?: TPrescriptionSelect[];

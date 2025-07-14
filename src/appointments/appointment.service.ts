@@ -216,3 +216,50 @@ export const deleteAppointmentService = async (id: number): Promise<boolean> => 
 
   return (deleted?.rowCount ?? 0) > 0;
 };
+
+
+
+
+// 🔹 Get appointments for a doctor by their user_id (i.e., authenticated doctor)
+export const getAppointmentsByDoctorUserIdService = async (
+  userId: number
+): Promise<SanitizedAppointment[] | null> => {
+  // 1. Find the doctor profile by user ID
+  const doctor = await db.query.doctors.findFirst({
+    where: eq(doctors.user_id, userId),
+  });
+
+  if (!doctor) return null;
+
+  // 2. Fetch appointments for the doctor
+  const appointmentsList = await db.query.appointments.findMany({
+    where: eq(appointments.doctor_id, doctor.doctor_id),
+    orderBy: desc(appointments.created_at),
+    with: {
+      user: true,
+      prescriptions: true,
+      payments: true,
+      complaints: true,
+    },
+  });
+
+  // 3. Fetch & sanitize doctor.user
+  const doctorUser = await db.query.users.findFirst({
+    where: eq(users.user_id, userId),
+  });
+
+  const sanitizedDoctorUser = doctorUser ? sanitizeUser(doctorUser) : undefined;
+
+  // 4. Format the result
+  return appointmentsList.map((appt) => ({
+    ...appt,
+    user: appt.user ? sanitizeUser(appt.user) : undefined,
+    doctor: {
+      ...doctor,
+      user: sanitizedDoctorUser,
+      available_hours: Array.isArray(doctor.available_hours)
+        ? doctor.available_hours
+        : [],
+    },
+  }));
+};

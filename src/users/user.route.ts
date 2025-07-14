@@ -7,7 +7,7 @@ import {
   deleteUser,
 } from '@/users/user.controller';
 
-import { adminAuth, anyRoleAuth } from '@/middleware/bearAuth';
+import { adminAuth, adminOrDoctorAuth, anyRoleAuth, doctorAuth } from '@/middleware/bearAuth';
 
 
 import validate from '@/middleware/validate';
@@ -36,7 +36,7 @@ const userRouter = express.Router();
  *       403:
  *         description: Forbidden
  */
-userRouter.get('/users', adminAuth, getUsers);
+userRouter.get('/users', adminOrDoctorAuth, getUsers);
 
 /**
  * @swagger

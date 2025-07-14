@@ -7,6 +7,43 @@ import {
   deleteAppointmentService,
   getAppointmentsByUserIdService,
 } from './appointment.service';
+// import { Request, Response, NextFunction } from 'express';
+import { getAppointmentsByDoctorUserIdService } from './appointment.service';
+
+
+
+// 🔹 GET /api/appointments/doctor - Authenticated doctor only
+export const getAppointmentsByDoctor = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  console.log('GET /api/appointments/doctor hit');
+
+  try {
+    const userId = req.user?.userId; // ✅ use correct field
+    const role = req.user?.role;
+
+    if (!userId || role !== 'doctor') {
+      res.status(403).json({ error: 'Access denied. Doctor access only.' });
+      return;
+    }
+
+    const appointments = await getAppointmentsByDoctorUserIdService(userId);
+
+    if (!appointments || appointments.length === 0) {
+      res.status(404).json({ message: 'No appointments found for this doctor' });
+      return;
+    }
+
+    res.status(200).json(appointments);
+  } catch (error) {
+    console.error('Error in getAppointmentsByDoctorController:', error);
+    next(error);
+  }
+};
+
+
 
 // 🔹 GET /api/appointments - Admin only
 export const getAppointments = async (
@@ -133,7 +170,11 @@ export const createAppointment = async (
   }
 };
 
-// 🔹 PUT /api/appointments/:id/status - Admin or doctor assigned
+
+
+// 🔹 PUT /api/appointments/:id/status - Admin or assigned doctor
+// 🔹 PUT /api/appointments/:id/status - Admin or assigned doctor
+
 export const updateAppointmentStatus = async (
   req: Request,
   res: Response,
@@ -141,40 +182,59 @@ export const updateAppointmentStatus = async (
 ): Promise<void> => {
   const appointmentId = parseInt(req.params.id, 10);
   const { status } = req.body;
-  console.log(`PUT /api/appointments/${req.params.id}/status hit with:`, status);
+  const user = req.user;
 
+  console.log(`🔄 PUT /api/appointments/${appointmentId}/status hit`);
+  console.log('🧾 New Status:', status);
+
+  // ✅ Validate ID
   if (isNaN(appointmentId)) {
     res.status(400).json({ error: 'Invalid appointment ID' });
     return;
   }
 
-  if (!['Pending', 'Confirmed', 'Cancelled'].includes(status)) {
+  // ✅ Validate Status
+  const validStatuses = ['Pending', 'Confirmed', 'Cancelled'];
+  if (!validStatuses.includes(status)) {
     res.status(400).json({ error: 'Invalid status value' });
     return;
   }
 
   try {
+    // 🔍 Fetch appointment with doctor nested
     const appointment = await getAppointmentByIdService(appointmentId);
     if (!appointment) {
       res.status(404).json({ message: 'Appointment not found' });
       return;
     }
 
-    if (
-      req.user?.role !== 'admin' &&
-      req.user?.userId !== appointment.doctor?.doctor_id
-    ) {
+    // 🔒 Authorization: only admin or assigned doctor (via doctor.user.user_id)
+    const isAdmin = user?.role === 'admin';
+    const isAssignedDoctor =
+      user?.role === 'doctor' && user.userId === appointment.doctor?.user?.user_id;
+
+    if (!isAdmin && !isAssignedDoctor) {
+      console.warn('❌ Access denied:', {
+        userId: user?.userId,
+        role: user?.role,
+        appointmentDoctorUserId: appointment.doctor?.user?.user_id,
+      });
       res.status(403).json({ error: 'Access denied' });
       return;
     }
 
+    // 🔄 Update status
     const message = await updateAppointmentStatusService(appointmentId, status);
+    console.log(`✅ Appointment ${appointmentId} status updated to ${status}`);
     res.status(200).json({ message });
+    return;
   } catch (error) {
-    console.error('Error in updateAppointmentStatusController:', error);
-    next(error);
+    console.error('❌ Error in updateAppointmentStatus:', error);
+    return next(error);
   }
 };
+
+
 
 // 🔹 DELETE /api/appointments/:id - Admin only
 export const deleteAppointment = async (

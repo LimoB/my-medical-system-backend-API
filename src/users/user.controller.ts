@@ -54,16 +54,19 @@ export const getUserById = async (
 
   try {
     const currentUserId = req.user?.userId;
-    const isAdmin = req.user?.role === 'admin';
-    const isSelf = currentUserId === userId;
-
-    if (!isAdmin && !isSelf) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
+    const currentRole = req.user?.role;
 
     const user = await getUserByIdService(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isAdmin = currentRole === 'admin';
+    const isSelf = currentUserId === userId;
+    const isDoctorViewingPatient = currentRole === 'doctor' && user.role === 'user';
+
+    if (!isAdmin && !isSelf && !isDoctorViewingPatient) {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     console.log(`✅ Found user ${userId}:`, user);
@@ -121,7 +124,7 @@ export const updateUser = async (
   }
 
   const isAdmin = currentUserRole === 'admin';
-  const isSelf = String(currentUserId) === String(userId);
+  const isSelf = currentUserId === userId;
 
   if (!isAdmin && !isSelf) {
     return res.status(403).json({ error: 'Access denied' });
@@ -200,7 +203,9 @@ export const deleteUser = async (
 
     const deleted = await deleteUserService(userId);
     if (!deleted) {
-      return res.status(404).json({ message: 'User not found or failed to delete' });
+      return res
+        .status(404)
+        .json({ message: 'User not found or failed to delete' });
     }
 
     console.log(`✅ User ${userId} deleted`);
