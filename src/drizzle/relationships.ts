@@ -6,6 +6,7 @@ import {
   prescriptions,
   payments,
   complaints,
+  consultations,
 } from './schema';
 
 // === USERS ===
@@ -13,10 +14,11 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   appointments: many(appointments),
   prescriptions: many(prescriptions),
   complaints: many(complaints),
+  consultations: many(consultations),
   doctor: one(doctors, {
     fields: [users.user_id],
     references: [doctors.user_id],
-  }), // ✅ Enables: with: { doctor: true }
+  }),
 }));
 
 // === DOCTORS ===
@@ -27,6 +29,7 @@ export const doctorsRelations = relations(doctors, ({ one, many }) => ({
   }),
   appointments: many(appointments),
   prescriptions: many(prescriptions),
+  consultations: many(consultations),
 }));
 
 // === APPOINTMENTS ===
@@ -42,6 +45,26 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
   prescriptions: many(prescriptions),
   payments: many(payments),
   complaints: many(complaints),
+  consultation: one(consultations, {
+    fields: [appointments.appointment_id],
+    references: [consultations.appointment_id],
+  }),
+}));
+
+// === CONSULTATIONS ===
+export const consultationsRelations = relations(consultations, ({ one }) => ({
+  appointment: one(appointments, {
+    fields: [consultations.appointment_id],
+    references: [appointments.appointment_id],
+  }),
+  doctor: one(doctors, {
+    fields: [consultations.doctor_id],
+    references: [doctors.doctor_id],
+  }),
+  patient: one(users, {
+    fields: [consultations.patient_id],
+    references: [users.user_id],
+  }),
 }));
 
 // === PRESCRIPTIONS ===

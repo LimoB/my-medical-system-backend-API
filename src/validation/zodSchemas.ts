@@ -4,15 +4,15 @@ import { z } from 'zod';
 // ENUMS
 // ────────────────────────────────
 export const roleEnum = z.enum(['user', 'admin', 'doctor']);
-export const appointmentStatusEnum = z.enum(['Pending', 'Confirmed', 'Cancelled']);
+export const appointmentStatusEnum = z.enum(['Pending', 'Confirmed', 'Cancelled', 'Completed']);
 export const complaintStatusEnum = z.enum(['Open', 'In Progress', 'Resolved', 'Closed']);
 export const paymentStatusEnum = z.enum(['Pending', 'Paid', 'Failed']);
+export const consultationStatusEnum = z.enum(['Ongoing', 'Completed']);
+export const paymentMethodEnum = z.enum(['stripe', 'mpesa', 'paypal', 'cash']);
 
 // ────────────────────────────────
 // USER SCHEMAS
 // ────────────────────────────────
-
-// For new user registration
 export const newUserSchema = z.object({
   first_name: z.string().min(1),
   last_name: z.string().min(1),
@@ -28,7 +28,6 @@ export const newUserSchema = z.object({
   last_login: z.coerce.date().nullable().optional(),
 });
 
-// For full user updates (by admin or self, excluding password)
 export const updateUserSchema = z
   .object({
     first_name: z.string().min(1).optional(),
@@ -42,7 +41,6 @@ export const updateUserSchema = z
   })
   .strict();
 
-// ✅ For role-only updates
 export const updateUserRoleSchema = z.object({
   role: roleEnum,
 });
@@ -71,12 +69,11 @@ export const newAppointmentSchema = z.object({
     .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
       message: 'Time must be in HH:MM format',
     }),
-  total_amount: z.coerce.number().positive(),  // required
-  payment_per_hour: z.coerce.number().nonnegative().default(0), // required with default 0
+  total_amount: z.coerce.number().positive(),
+  payment_per_hour: z.coerce.number().nonnegative().default(0),
   appointment_status: appointmentStatusEnum.optional().default('Pending'),
 });
 
-// For updating only the appointment status
 export const updateAppointmentStatusSchema = z.object({
   status: appointmentStatusEnum,
 });
@@ -93,13 +90,29 @@ export const newPrescriptionSchema = z.object({
 });
 
 // ────────────────────────────────
+// CONSULTATION SCHEMAS ✅
+// ────────────────────────────────
+export const newConsultationSchema = z.object({
+  appointment_id: z.number().int(),
+  doctor_id: z.number().int(),
+  patient_id: z.number().int(),
+  symptoms: z.string().optional(),
+  diagnosis: z.string().min(1),
+  treatment_plan: z.string().optional(),
+  additional_notes: z.string().optional(), // aligns with DB field
+  duration_minutes: z.number().int().positive().optional(),
+  status: consultationStatusEnum.default('Completed'),
+});
+
+// ────────────────────────────────
 // PAYMENT SCHEMAS
 // ────────────────────────────────
 export const newPaymentSchema = z.object({
+  appointment_id: z.number().int(),
   amount: z.coerce.number().positive(),
-  patientId: z.string().min(1),
-  method: z.string().min(1),
-  status: paymentStatusEnum.optional(),
+  payment_method: paymentMethodEnum,
+  transaction_id: z.string().min(1),
+  payment_status: paymentStatusEnum.optional().default('Pending'),
 });
 
 // ────────────────────────────────

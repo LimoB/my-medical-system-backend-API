@@ -1565,6 +1565,10 @@
       "description": "Complaint management endpoints"
     },
     {
+      "name": "Consultations",
+      "description": "Consultation management"
+    },
+    {
       "name": "Dashboard",
       "description": "Admin dashboard analytics endpoints"
     },
