@@ -1,10 +1,11 @@
 import { desc, isNull } from 'drizzle-orm';
 import db from '@/drizzle/db';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { users, doctors, appointments } from '@/drizzle/schema';
 import type { TDoctorInsert, SanitizedDoctor, DoctorPatient } from '@/drizzle/types';
 import { sanitizeUser } from '@/utils/sanitize';
-// 🔹 Get all doctors — includes users with role 'doctor' but may not yet have doctor profile
+import * as schema from '@/drizzle/schema';
+
 // 🔹 Get all doctors — includes users with role 'doctor' but may not yet have doctor profile
 export const getDoctorsService = async (): Promise<SanitizedDoctor[]> => {
   try {
@@ -30,21 +31,19 @@ export const getDoctorsService = async (): Promise<SanitizedDoctor[]> => {
         },
       },
       orderBy: [
-        desc(users.updated_at), // fallback ordering
+        desc(users.updated_at),
         desc(users.created_at),
-        desc(users.user_id), // ensures latest registered are prioritized
+        desc(users.user_id),
       ],
     });
 
     return result.map((user): SanitizedDoctor => {
       const doctor = user.doctor;
 
-      // Ensure available_hours is always an array
       const available_hours = Array.isArray(doctor?.available_hours)
         ? doctor?.available_hours
         : [];
 
-      // Ensure payment_per_hour is a number (default to 0 if undefined)
       const payment_per_hour = typeof doctor?.payment_per_hour === 'number'
         ? doctor?.payment_per_hour
         : 0;
@@ -54,9 +53,9 @@ export const getDoctorsService = async (): Promise<SanitizedDoctor[]> => {
         user_id: user.user_id,
         specialization: doctor?.specialization ?? '',
         available_days: doctor?.available_days ?? '',
-        available_hours, // Ensure this is included as an array
-        payment_per_hour, // Add payment per hour
-        description: doctor?.description ?? '', // Add description field
+        available_hours,
+        payment_per_hour,
+        description: doctor?.description ?? '',
         created_at: doctor?.created_at ?? null,
         updated_at: doctor?.updated_at ?? null,
         user: sanitizeUser(user),
@@ -80,6 +79,7 @@ export const getDoctorsService = async (): Promise<SanitizedDoctor[]> => {
     throw new Error('Unable to fetch doctors');
   }
 };
+
 // 🔹 Get doctor by ID
 export const getDoctorByIdService = async (
   doctorId: number
@@ -109,12 +109,10 @@ export const getDoctorByIdService = async (
 
     if (!doctor) return null;
 
-    // Ensure available_hours is always an array
     const available_hours = Array.isArray(doctor?.available_hours)
       ? doctor?.available_hours
       : [];
 
-    // Ensure payment_per_hour is a number (default to 0 if undefined)
     const payment_per_hour = typeof doctor?.payment_per_hour === 'number'
       ? doctor?.payment_per_hour
       : 0;
@@ -124,9 +122,9 @@ export const getDoctorByIdService = async (
       user_id: doctor.user_id,
       specialization: doctor.specialization,
       available_days: doctor.available_days ?? '',
-      available_hours, // Ensure this is included as an array
-      payment_per_hour, // Add payment per hour
-      description: doctor.description ?? '', // Add description field
+      available_hours,
+      payment_per_hour,
+      description: doctor.description ?? '',
       created_at: doctor.created_at,
       updated_at: doctor.updated_at,
       user: doctor.user ? sanitizeUser(doctor.user) : undefined,
@@ -150,16 +148,11 @@ export const getDoctorByIdService = async (
   }
 };
 
-
-
-
-
 // 🔹 Create new doctor
 export const createDoctorService = async (
   doctor: TDoctorInsert
 ): Promise<string> => {
   try {
-    // Ensure user exists
     const userExists = await db.query.users.findFirst({
       where: eq(users.user_id, doctor.user_id),
     });
@@ -168,7 +161,6 @@ export const createDoctorService = async (
       throw new Error(`User with ID ${doctor.user_id} does not exist`);
     }
 
-    // Optional: prevent duplicates
     const alreadyDoctor = await db.query.doctors.findFirst({
       where: eq(doctors.user_id, doctor.user_id),
     });
@@ -177,7 +169,6 @@ export const createDoctorService = async (
       throw new Error('Doctor profile already exists for this user');
     }
 
-    // Ensure role is set to 'doctor'
     if (userExists.role !== 'doctor') {
       await db
         .update(users)
@@ -185,25 +176,21 @@ export const createDoctorService = async (
         .where(eq(users.user_id, doctor.user_id));
     }
 
-    // Validate required fields for doctor profile
     if (!doctor.specialization || !doctor.available_days || !doctor.payment_per_hour) {
       throw new Error('Doctor profile is incomplete. Please provide specialization, available days, and payment per hour.');
     }
 
-    // Ensure that specialization, available days, and payment per hour are not empty or invalid
     if (doctor.specialization.trim() === "" || doctor.available_days.trim() === "" || doctor.payment_per_hour <= 0) {
       throw new Error("Doctor profile contains invalid data. Ensure all fields are filled correctly.");
     }
 
-    // Optional: Set default values if some fields are missing
     const doctorData = {
       ...doctor,
-      available_days: doctor.available_days || 'Not Available', // Default value for available_days
-      available_hours: doctor.available_hours || [], // Default empty array for available_hours
-      payment_per_hour: doctor.payment_per_hour || 0, // Default payment per hour if not provided
+      available_days: doctor.available_days || 'Not Available',
+      available_hours: doctor.available_hours || [],
+      payment_per_hour: doctor.payment_per_hour || 0,
     };
 
-    // Insert the new doctor record without specifying doctor_id (let the database handle the ID)
     const result = await db.insert(doctors).values(doctorData).returning();
 
     if (result.length === 0) {
@@ -217,7 +204,6 @@ export const createDoctorService = async (
   }
 };
 
-
 // 🔹 Update doctor
 export const updateDoctorService = async (
   doctorId: number,
@@ -227,9 +213,8 @@ export const updateDoctorService = async (
     if (!doctorId || doctorId <= 0) throw new Error('Invalid doctor ID');
 
     console.log('Received update for doctorId:', doctorId);
-    console.log('Updates being applied:', updates);  // This will log the data being passed
+    console.log('Updates being applied:', updates);
 
-    // Validate and clean data if needed
     if (updates.available_days && typeof updates.available_days === 'string') {
       updates.available_days = updates.available_days.trim();
     }
@@ -239,26 +224,22 @@ export const updateDoctorService = async (
     }
 
     if (updates.payment_per_hour && typeof updates.payment_per_hour === 'number') {
-      updates.payment_per_hour = Math.max(0, updates.payment_per_hour);  // Ensure non-negative
+      updates.payment_per_hour = Math.max(0, updates.payment_per_hour);
     }
 
-    // Log the final updates
     console.log('Final updates:', updates);
 
-    // Ensure that there are changes to be updated
     if (Object.keys(updates).length === 0) {
       console.log('No updates provided, skipping database query');
       return 'No changes to update.';
     }
 
-    // Perform the update query
     const result = await db
       .update(doctors)
       .set(updates)
       .where(eq(doctors.doctor_id, doctorId))
       .returning();
 
-    // Check if the doctor was updated
     if (result.length === 0) {
       console.error('No doctor updated, check doctor_id:', doctorId);
       throw new Error('Doctor update failed or doctor not found');
@@ -292,36 +273,40 @@ export const deleteDoctorService = async (
   }
 };
 
-
+// 🔹 Get all patients of a doctor
 export const getDoctorPatientsService = async (
   doctorId: number
 ): Promise<DoctorPatient[]> => {
   try {
-    if (!doctorId || doctorId <= 0) throw new Error('Invalid doctor ID');
+    if (!doctorId || doctorId <= 0) {
+      throw new Error('Invalid doctor ID');
+    }
 
     const result = await db
       .select({
-        user_id: users.user_id,
-        first_name: users.first_name,
-        last_name: users.last_name,
-        email: users.email,
-        contact_phone: users.contact_phone,
-        image_url: users.image_url,
-        role: users.role,
-        address: users.address,
-        is_verified: users.is_verified,
-        last_login: users.last_login,
-        created_at: users.created_at,
-        updated_at: users.updated_at,
-        appointmentDate: appointments.appointment_date,
-        timeSlot: appointments.time_slot,
-        status: appointments.appointment_status,
+        user_id: schema.users.user_id,
+        first_name: schema.users.first_name,
+        last_name: schema.users.last_name,
+        email: schema.users.email,
+        contact_phone: schema.users.contact_phone,
+        image_url: schema.users.image_url,
+        role: schema.users.role,
+        address: schema.users.address,
+        is_verified: schema.users.is_verified,
+        last_login: schema.users.last_login,
+        created_at: schema.users.created_at,
+        updated_at: schema.users.updated_at,
+        appointmentDate: schema.appointments.appointment_date,
+        timeSlot: schema.appointments.time_slot,
+        status: schema.appointments.appointment_status,
       })
-      .from(appointments)
-      .innerJoin(users, eq(appointments.user_id, users.user_id))
-      .where(eq(appointments.doctor_id, doctorId));
+      .from(schema.appointments)
+      .innerJoin(
+        schema.users,
+        eq(schema.appointments.user_id, schema.users.user_id)
+      )
+      .where(eq(schema.appointments.doctor_id, doctorId));
 
-    // Deduplicate patients by user_id
     const seen = new Set<number>();
     const unique = result.filter((row) => {
       if (seen.has(row.user_id)) return false;
@@ -343,7 +328,7 @@ export const getDoctorPatientsService = async (
         last_login: row.last_login,
         created_at: row.created_at,
         updated_at: row.updated_at,
-        password: '', // sanitized
+        password: '',
         verification_token: null,
         token_expiry: null,
       }),
@@ -354,5 +339,30 @@ export const getDoctorPatientsService = async (
   } catch (error) {
     console.error('❌ Failed to fetch doctor patients:', error);
     throw new Error('Failed to fetch doctor patients');
+  }
+};
+
+// 🔹 Delete all appointments of a patient by doctor
+export const deleteDoctorPatientService = async (
+  doctorId: number,
+  patientId: number
+): Promise<boolean> => {
+  try {
+    if (!doctorId || !patientId) throw new Error('Missing doctor or patient ID');
+
+    const result = await db
+      .delete(appointments)
+      .where(
+        and(
+          eq(appointments.doctor_id, doctorId),
+          eq(appointments.user_id, patientId)
+        )
+      )
+      .returning();
+
+    return result.length > 0;
+  } catch (error) {
+    console.error('❌ Failed to delete doctor-patient appointments:', error);
+    throw new Error('Failed to delete doctor-patient records');
   }
 };

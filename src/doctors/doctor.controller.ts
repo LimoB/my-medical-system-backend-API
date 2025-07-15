@@ -5,10 +5,16 @@ import {
   createDoctorService,
   updateDoctorService,
   deleteDoctorService,
-   getDoctorPatientsService,
+  getDoctorPatientsService,
+   deleteDoctorPatientService,
 } from './doctor.service';
 import { newDoctorSchema } from '@/validation/zodSchemas';
 import { z } from 'zod';
+import db from '@/drizzle/db'; // ✅ correct this path based on your project structure
+
+import * as schema from '@/drizzle/schema';
+import { eq } from 'drizzle-orm';
+
 
 // 🔹 GET /api/doctors
 export const getDoctors = async (
@@ -170,39 +176,99 @@ export const deleteDoctor = async (
 
 
 // 🔹 GET /api/doctors/:id/patients
+
+
+
+
 export const getDoctorPatients = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const doctorId = parseInt(req.params.id, 10);
   const currentUser = req.user;
 
-  console.log(`[GET] /api/doctors/${doctorId}/patients by user ${currentUser?.userId} (${currentUser?.role})`);
+  console.log(
+    `[GET] /api/doctor/patients requested by user ${currentUser?.userId} (${currentUser?.role})`
+  );
 
-  if (isNaN(doctorId) || doctorId <= 0) {
-    res.status(400).json({ error: 'Invalid doctor ID' });
-    return;
-  }
-
-  // Only allow if user is admin or the doctor requesting their own patients
-  if (currentUser?.role === 'doctor' && currentUser.userId !== doctorId) {
-    res.status(403).json({ error: 'Access denied: You can only view your own patients' });
+  if (!currentUser?.userId) {
+    res.status(401).json({ error: 'Unauthorized: user ID missing' });
     return;
   }
 
   try {
-    const patients = await getDoctorPatientsService(doctorId);
+    const doctor = await db.query.doctors.findFirst({
+      where: eq(schema.doctors.user_id, currentUser.userId),
+    });
 
-    if (!patients.length) {
-      res.status(404).json({ message: 'No patients found for this doctor' });
+    if (!doctor) {
+      res.status(404).json({ error: 'Doctor profile not found.' });
+      return;
+    }
+
+    const patients = await getDoctorPatientsService(doctor.doctor_id);
+
+    if (!patients || patients.length === 0) {
+      res.status(404).json({ message: 'No patients found for this doctor.' });
       return;
     }
 
     res.status(200).json(patients);
   } catch (error) {
-    console.error(`❌ getDoctorPatients error for doctor ID ${doctorId}:`, error);
+    console.error(
+      `❌ Error fetching patients for doctor userId ${currentUser.userId}:`,
+      error
+    );
     next(error);
   }
 };
 
+
+
+// 🔹 DELETE /api/doctor/patients/:patientId
+export const deleteDoctorPatient = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const currentUser = req.user;
+  const patientId = Number(req.params.patientId);
+
+  console.log(
+    `[DELETE] /api/doctor/patients/${patientId} requested by doctor user ${currentUser?.userId}`
+  );
+
+  if (!currentUser?.userId) {
+    res.status(401).json({ error: 'Unauthorized: user ID missing' });
+    return;
+  }
+
+  if (!patientId || isNaN(patientId)) {
+    res.status(400).json({ error: 'Invalid patient ID' });
+    return;
+  }
+
+  try {
+    const doctor = await db.query.doctors.findFirst({
+      where: eq(schema.doctors.user_id, currentUser.userId),
+    });
+
+    if (!doctor) {
+      res.status(404).json({ error: 'Doctor profile not found' });
+      return;
+    }
+
+    // Use the service to delete appointment history for this doctor-patient
+    const deleted = await deleteDoctorPatientService(doctor.doctor_id, patientId);
+
+    if (!deleted) {
+      res.status(404).json({ message: 'No matching patient records to delete' });
+      return;
+    }
+
+    res.status(200).json({ message: 'Patient records deleted successfully' });
+  } catch (error) {
+    console.error(`❌ Error deleting patient ${patientId} for doctor ${currentUser.userId}:`, error);
+    next(error);
+  }
+};

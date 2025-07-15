@@ -1,7 +1,10 @@
+// === jwt.util.ts ===
+
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
 import ms, { type StringValue } from 'ms';
 
+// === Extend Express Request to include user ===
 declare global {
   namespace Express {
     interface Request {
@@ -10,10 +13,10 @@ declare global {
   }
 }
 
-// === ROLES ===
+// === User Role Types ===
 export type UserRole = 'user' | 'admin' | 'doctor';
 
-// === Token Payload ===
+// === Decoded JWT Payload Type ===
 export type DecodedToken = {
   userId: number;
   email: string;
@@ -21,11 +24,11 @@ export type DecodedToken = {
   exp?: number;
 };
 
-// === Generate 6-digit verification code ===
+// === Generate a random 6-digit verification code ===
 export const generateVerificationCode = (): string =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
-// === Sign Token ===
+// === Sign Access Token ===
 export const signToken = (
   payload: DecodedToken,
   secret: string,
@@ -47,24 +50,41 @@ export const signRefreshToken = (
   return jwt.sign(payload, secret, options);
 };
 
-// === Normalize Decoded Token ===
+// === Normalize a decoded JWT payload ===
 const normalizeDecodedToken = (raw: any): DecodedToken | null => {
-  const userIdRaw = raw.userId ?? raw.id;
-  const userId = typeof userIdRaw === 'string' ? parseInt(userIdRaw, 10) : userIdRaw;
-
-  const decoded: DecodedToken = {
-    userId,
-    email: raw.email,
-    role: raw.role,
-    exp: raw.exp,
-  };
-
-  if (!decoded.userId || !decoded.email || !decoded.role) {
-    console.error('[normalizeDecodedToken] Missing fields:', raw);
+  if (!raw || typeof raw !== 'object') {
+    console.error('[normalizeDecodedToken] Invalid token payload:', raw);
     return null;
   }
 
-  return decoded;
+  const idCandidates = [raw.userId, raw.id];
+  const userId = idCandidates.find(id => typeof id === 'number')
+    ?? (typeof idCandidates.find(id => typeof id === 'string') === 'string'
+      ? parseInt(idCandidates.find(id => typeof id === 'string')!, 10)
+      : null);
+
+  const email = typeof raw.email === 'string' ? raw.email : null;
+  const role = raw.role;
+
+  if (
+    typeof userId !== 'number' ||
+    !email ||
+    !['user', 'admin', 'doctor'].includes(role)
+  ) {
+    console.error('[normalizeDecodedToken] Missing/invalid fields:', {
+      userId,
+      email,
+      role,
+    });
+    return null;
+  }
+
+  return {
+    userId,
+    email,
+    role,
+    exp: typeof raw.exp === 'number' ? raw.exp : undefined,
+  };
 };
 
 // === Verify Access Token ===
@@ -95,31 +115,36 @@ export const verifyRefreshToken = (
   }
 };
 
-// === Auth Middleware Factory ===
+// === Auth Middleware Factory for role-based access ===
 const authMiddlewareFactory = (allowedRoles: UserRole | UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const authHeader = req.header('Authorization');
+
     if (!authHeader) {
       console.warn('[authMiddleware] Authorization header missing');
-       res.status(401).json({ error: 'Missing authorization token' });
-       return;
+      res.status(401).json({ error: 'Missing authorization token' });
+      return;
     }
 
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : authHeader;
+
     const decoded = verifyToken(token, process.env.JWT_SECRET as string);
 
     if (!decoded) {
-     res.status(401).json({ error: 'Invalid or expired token' });
-
-     return;
+      res.status(401).json({ error: 'Invalid or expired token' });
+      return;
     }
 
     const allowed = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-    if (!allowed.includes(decoded.role)) {
-      console.warn(`[authMiddleware] Access denied. Role '${decoded.role}' not in ${allowed}`);
-       res.status(403).json({ error: 'Access denied' });
 
-       return;
+    if (!allowed.includes(decoded.role)) {
+      console.warn(
+        `[authMiddleware] Access denied. Role '${decoded.role}' not allowed. Allowed: ${allowed.join(', ')}`
+      );
+      res.status(403).json({ error: 'Access denied' });
+      return;
     }
 
     req.user = decoded;
@@ -127,7 +152,7 @@ const authMiddlewareFactory = (allowedRoles: UserRole | UserRole[]) => {
   };
 };
 
-// === Export Role-Based Middlewares ===
+// === Export Specific Role-Based Middleware ===
 export const userAuth = authMiddlewareFactory('user');
 export const adminAuth = authMiddlewareFactory('admin');
 export const doctorAuth = authMiddlewareFactory('doctor');

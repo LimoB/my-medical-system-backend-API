@@ -910,6 +910,40 @@
         }
       }
     },
+    "/doctors/patients/{patientUserId}": {
+      "delete": {
+        "summary": "Delete a doctor's patient history",
+        "tags": [
+          "Doctors"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "patientUserId",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Patient history deleted"
+          },
+          "403": {
+            "description": "Not authorized"
+          },
+          "404": {
+            "description": "Appointment history not found"
+          }
+        }
+      }
+    },
     "/payments": {
       "get": {
         "summary": "Get all payments (admin only)",

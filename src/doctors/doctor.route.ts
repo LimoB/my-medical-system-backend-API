@@ -10,6 +10,12 @@ import {
 import { adminAuth, adminOrDoctorAuth } from '@/middleware/bearAuth';
 import validate from '@/middleware/validate';
 import { newDoctorSchema } from '@/validation/zodSchemas';
+import { checkDoctorAccess } from '@/middleware/checkDoctorAccess';
+import { deleteDoctorPatient } from './doctor.controller';
+
+
+
+
 
 const doctorRouter = express.Router();
 
@@ -171,7 +177,39 @@ doctorRouter.delete('/doctors/:id', adminAuth, deleteDoctor);
  *       403:
  *         description: Access denied
  */
-doctorRouter.get('/doctors/:id/patients', adminOrDoctorAuth, getDoctorPatients);
+// doctor.routes.ts or wherever your doctor routes are defined
+doctorRouter.get('/doctor/patients', adminOrDoctorAuth, getDoctorPatients);
+
+/**
+ * @swagger
+ * /doctors/patients/{patientUserId}:
+ *   delete:
+ *     summary: Delete a doctor's patient history
+ *     tags: [Doctors]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: patientUserId
+ *         required: true
+ *         schema:
+ *           type: number
+ *     responses:
+ *       200:
+ *         description: Patient history deleted
+ *       403:
+ *         description: Not authorized
+ *       404:
+ *         description: Appointment history not found
+ */
+doctorRouter.delete(
+  '/doctors/patients/:patientUserId',
+  adminOrDoctorAuth,
+  deleteDoctorPatient
+);
+
+
+
 
 export default doctorRouter;
 
