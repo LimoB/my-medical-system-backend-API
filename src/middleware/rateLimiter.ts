@@ -1,5 +1,5 @@
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 
 const isProduction = process.env.NODE_ENV === "production";
 

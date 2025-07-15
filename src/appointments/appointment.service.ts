@@ -1,7 +1,7 @@
 import db from '@/drizzle/db';
 import { appointments, users, doctors } from '@/drizzle/schema';
 import { eq, desc, inArray } from 'drizzle-orm';
-import {
+import type {
   TAppointmentInsert,
   TAppointmentSelect,
   SanitizedAppointment,

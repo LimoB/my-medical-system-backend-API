@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express'
+import type { Request, Response, NextFunction } from 'express'
 import {
   getAllComplaintsService,
   getComplaintByIdService,
@@ -40,36 +40,37 @@ export const getComplaintById = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const complaintId = parseInt(req.params.id, 10)
-  console.log(`➡️ GET /api/complaints/${req.params.id} hit`)
+  const complaintId = parseInt(req.params.id, 10);
+  console.log(`➡️ GET /api/complaints/${req.params.id} hit`);
 
   if (isNaN(complaintId)) {
-    res.status(400).json({ error: 'Invalid complaint ID' })
-    return
+    res.status(400).json({ error: 'Invalid complaint ID' });
+    return;
   }
 
   try {
-    const complaint = await getComplaintByIdService(complaintId)
+    const complaint = await getComplaintByIdService(complaintId);
 
     if (!complaint) {
-      res.status(404).json({ message: 'Complaint not found' })
-      return
+      res.status(404).json({ message: 'Complaint not found' });
+      return;
     }
 
     if (
       req.user?.role !== 'admin' &&
-      req.user?.userId !== complaint.user_id.toString()
+      req.user?.userId !== complaint.user_id
     ) {
-      res.status(403).json({ error: 'Access denied' })
-      return
+      res.status(403).json({ error: 'Access denied' });
+      return;
     }
 
-    res.status(200).json(complaint)
+    res.status(200).json(complaint);
   } catch (error) {
-    console.error('❌ Error in getComplaintByIdController:', error)
-    next(error)
+    console.error('❌ Error in getComplaintByIdController:', error);
+    next(error);
   }
-}
+};
+
 
 // 🔹 POST /api/complaints - Any logged-in user
 export const createComplaint = async (
@@ -77,30 +78,31 @@ export const createComplaint = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { subject, description, related_appointment_id } = req.body
-  const userId = req.user?.userId
+  const { subject, description, related_appointment_id } = req.body;
+  const userId = req.user?.userId;
 
-  console.log('➡️ POST /api/complaints hit with:', req.body)
+  console.log('➡️ POST /api/complaints hit with:', req.body);
 
   if (!userId || !subject || !description) {
-    res.status(400).json({ error: 'Subject, description, and user ID are required' })
-    return
+    res.status(400).json({ error: 'Subject, description, and user ID are required' });
+    return;
   }
 
   try {
     const complaint = await createComplaintService({
-      user_id: parseInt(userId),
+      user_id: userId, // ✅ already a number
       subject,
       description,
       related_appointment_id: related_appointment_id || null,
-    })
+    });
 
-    res.status(201).json(complaint)
+    res.status(201).json(complaint);
   } catch (error) {
-    console.error('❌ Error in createComplaintController:', error)
-    next(error)
+    console.error('❌ Error in createComplaintController:', error);
+    next(error);
   }
-}
+};
+
 
 // 🔹 PUT /api/complaints/:id - Admin only (update status)
 export const updateComplaintStatus = async (

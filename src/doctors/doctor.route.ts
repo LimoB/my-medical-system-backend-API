@@ -5,8 +5,9 @@ import {
   createDoctor,
   updateDoctor,
   deleteDoctor,
+  getDoctorPatients,
 } from './doctor.controller';
-import { adminAuth } from '@/middleware/bearAuth';
+import { adminAuth, adminOrDoctorAuth } from '@/middleware/bearAuth';
 import validate from '@/middleware/validate';
 import { newDoctorSchema } from '@/validation/zodSchemas';
 
@@ -150,4 +151,28 @@ doctorRouter.put(
  */
 doctorRouter.delete('/doctors/:id', adminAuth, deleteDoctor);
 
+/**
+ * @swagger
+ * /doctors/{id}/patients:
+ *   get:
+ *     summary: Get patients for a doctor (admin or own doctor only)
+ *     tags: [Doctors]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of patients
+ *       403:
+ *         description: Access denied
+ */
+doctorRouter.get('/doctors/:id/patients', adminOrDoctorAuth, getDoctorPatients);
+
 export default doctorRouter;
+
+

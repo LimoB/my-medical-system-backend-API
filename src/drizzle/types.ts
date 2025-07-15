@@ -13,12 +13,12 @@ import {
   updateUserSchema,
 } from '@/validation/zodSchemas';
 
-// ========== Base Zod Input Types ==========
+// ========== Zod Input Types ==========
 export type NewUserInput = z.infer<typeof newUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type NewDoctorInput = z.infer<typeof newDoctorSchema>;
 
-// ========== Base Drizzle Types ==========
+// ========== Drizzle Table Types ==========
 export type TUserInsert = typeof users.$inferInsert;
 export type TUserSelect = typeof users.$inferSelect;
 
@@ -37,7 +37,7 @@ export type TPaymentSelect = typeof payments.$inferSelect;
 export type TComplaintInsert = typeof complaints.$inferInsert;
 export type TComplaintSelect = typeof complaints.$inferSelect;
 
-// ========== Payment Method Enum ==========
+// ========== Enums ==========
 export type PaymentMethod = 'stripe' | 'mpesa' | 'paypal' | 'cash';
 
 // ========== Extended / Populated Types ==========
@@ -97,17 +97,15 @@ export interface PopulatedComplaint extends TComplaintSelect {
 
 // ========== Sanitized Variants ==========
 
-// ========== Sanitized Variants ==========
-
 type SensitiveFields = 'password' | 'verification_token' | 'token_expiry';
 
-// ✅ User base sanitized
+// ✅ Base User (without sensitive fields)
 export type SanitizedUser = Omit<TUserSelect, SensitiveFields>;
 
-// ✅ Full user profile sanitized
+// ✅ Full profile (user + appointments/prescriptions/etc.)
 export type SanitizedPopulatedUser = Omit<PopulatedUser, SensitiveFields>;
 
-// ✅ Doctor sanitized with nested sanitized users
+// ✅ Doctor profile with nested sanitized data
 export type SanitizedDoctor = Omit<PopulatedDoctor, 'user' | 'appointments' | 'prescriptions'> & {
   user?: SanitizedUser;
   appointments?: (Omit<PopulatedAppointment, 'user'> & {
@@ -118,7 +116,7 @@ export type SanitizedDoctor = Omit<PopulatedDoctor, 'user' | 'appointments' | 'p
   })[];
 };
 
-// ✅ Appointment sanitized (🛠️ Now includes doctor_id & user_id for auth checks)
+// ✅ Appointment with nested details
 export type SanitizedAppointment = Omit<TAppointmentSelect, 'user' | 'doctor'> & {
   doctor_id: number;
   user_id: number;
@@ -129,22 +127,22 @@ export type SanitizedAppointment = Omit<TAppointmentSelect, 'user' | 'doctor'> &
   complaints?: TComplaintSelect[];
 };
 
-// ✅ Prescription sanitized
+// ✅ Prescription view
 export type SanitizedPrescription = Omit<PopulatedPrescription, 'doctor' | 'patient'> & {
   doctor?: TDoctorSelect;
   patient?: SanitizedUser;
 };
 
-// ✅ Payment sanitized
+// ✅ Payment with nested appointment info
 export type SanitizedPayment = Omit<PopulatedPayment, 'appointment'> & {
   appointment?: Omit<PopulatedPayment['appointment'], 'user' | 'doctor'> & {
     user?: SanitizedUser;
     doctor?: TDoctorSelect;
-    doctor_user?: SanitizedUser; // Used for displaying doctor's name
+    doctor_user?: SanitizedUser;
   };
 };
 
-// ✅ Complaint sanitized
+// ✅ Complaint with nested user
 export type SanitizedComplaint = Omit<PopulatedComplaint, 'user'> & {
   user?: SanitizedUser;
 };
@@ -156,3 +154,11 @@ export type SanitizedPopulatedComplaint = Omit<
   user?: SanitizedUser;
   appointment?: TAppointmentSelect;
 };
+
+// ✅ For doctor-patient listing
+export interface DoctorPatient {
+  user: SanitizedUser;
+  appointmentDate: TAppointmentSelect['appointment_date'];
+  timeSlot: TAppointmentSelect['time_slot'];
+  status: TAppointmentSelect['appointment_status'];
+}

@@ -1,10 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import {
   getDoctorsService,
   getDoctorByIdService,
   createDoctorService,
   updateDoctorService,
   deleteDoctorService,
+   getDoctorPatientsService,
 } from './doctor.service';
 import { newDoctorSchema } from '@/validation/zodSchemas';
 import { z } from 'zod';
@@ -166,3 +167,42 @@ export const deleteDoctor = async (
     next(error);
   }
 };
+
+
+// 🔹 GET /api/doctors/:id/patients
+export const getDoctorPatients = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const doctorId = parseInt(req.params.id, 10);
+  const currentUser = req.user;
+
+  console.log(`[GET] /api/doctors/${doctorId}/patients by user ${currentUser?.userId} (${currentUser?.role})`);
+
+  if (isNaN(doctorId) || doctorId <= 0) {
+    res.status(400).json({ error: 'Invalid doctor ID' });
+    return;
+  }
+
+  // Only allow if user is admin or the doctor requesting their own patients
+  if (currentUser?.role === 'doctor' && currentUser.userId !== doctorId) {
+    res.status(403).json({ error: 'Access denied: You can only view your own patients' });
+    return;
+  }
+
+  try {
+    const patients = await getDoctorPatientsService(doctorId);
+
+    if (!patients.length) {
+      res.status(404).json({ message: 'No patients found for this doctor' });
+      return;
+    }
+
+    res.status(200).json(patients);
+  } catch (error) {
+    console.error(`❌ getDoctorPatients error for doctor ID ${doctorId}:`, error);
+    next(error);
+  }
+};
+

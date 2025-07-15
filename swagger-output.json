@@ -879,6 +879,37 @@
         }
       }
     },
+    "/doctors/{id}/patients": {
+      "get": {
+        "summary": "Get patients for a doctor (admin or own doctor only)",
+        "tags": [
+          "Doctors"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of patients"
+          },
+          "403": {
+            "description": "Access denied"
+          }
+        }
+      }
+    },
     "/payments": {
       "get": {
         "summary": "Get all payments (admin only)",

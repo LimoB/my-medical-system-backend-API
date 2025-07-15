@@ -1,7 +1,8 @@
-import { eq, desc, isNull } from 'drizzle-orm';
+import { desc, isNull } from 'drizzle-orm';
 import db from '@/drizzle/db';
-import { users, doctors } from '@/drizzle/schema';
-import type { TDoctorInsert, SanitizedDoctor } from '@/drizzle/types';
+import { eq } from 'drizzle-orm';
+import { users, doctors, appointments } from '@/drizzle/schema';
+import type { TDoctorInsert, SanitizedDoctor, DoctorPatient } from '@/drizzle/types';
 import { sanitizeUser } from '@/utils/sanitize';
 // 🔹 Get all doctors — includes users with role 'doctor' but may not yet have doctor profile
 // 🔹 Get all doctors — includes users with role 'doctor' but may not yet have doctor profile
@@ -288,5 +289,70 @@ export const deleteDoctorService = async (
   } catch (error) {
     console.error(`❌ Error deleting doctor with ID ${doctorId}:`, error);
     throw new Error('Unable to delete doctor');
+  }
+};
+
+
+export const getDoctorPatientsService = async (
+  doctorId: number
+): Promise<DoctorPatient[]> => {
+  try {
+    if (!doctorId || doctorId <= 0) throw new Error('Invalid doctor ID');
+
+    const result = await db
+      .select({
+        user_id: users.user_id,
+        first_name: users.first_name,
+        last_name: users.last_name,
+        email: users.email,
+        contact_phone: users.contact_phone,
+        image_url: users.image_url,
+        role: users.role,
+        address: users.address,
+        is_verified: users.is_verified,
+        last_login: users.last_login,
+        created_at: users.created_at,
+        updated_at: users.updated_at,
+        appointmentDate: appointments.appointment_date,
+        timeSlot: appointments.time_slot,
+        status: appointments.appointment_status,
+      })
+      .from(appointments)
+      .innerJoin(users, eq(appointments.user_id, users.user_id))
+      .where(eq(appointments.doctor_id, doctorId));
+
+    // Deduplicate patients by user_id
+    const seen = new Set<number>();
+    const unique = result.filter((row) => {
+      if (seen.has(row.user_id)) return false;
+      seen.add(row.user_id);
+      return true;
+    });
+
+    return unique.map((row) => ({
+      user: sanitizeUser({
+        user_id: row.user_id,
+        first_name: row.first_name,
+        last_name: row.last_name,
+        email: row.email,
+        contact_phone: row.contact_phone,
+        image_url: row.image_url,
+        role: row.role,
+        address: row.address,
+        is_verified: row.is_verified,
+        last_login: row.last_login,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        password: '', // sanitized
+        verification_token: null,
+        token_expiry: null,
+      }),
+      appointmentDate: row.appointmentDate,
+      timeSlot: row.timeSlot,
+      status: row.status,
+    }));
+  } catch (error) {
+    console.error('❌ Failed to fetch doctor patients:', error);
+    throw new Error('Failed to fetch doctor patients');
   }
 };

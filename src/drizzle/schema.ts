@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm'; // ✅ Only `sql` from root
 import {
   pgTable,
   serial,
@@ -11,8 +11,8 @@ import {
   time,
   decimal,
   boolean,
-  jsonb,  // jsonb is imported here
-} from 'drizzle-orm/pg-core'
+  jsonb,
+} from 'drizzle-orm/pg-core'; // ✅ All schema definitions from pg-core
 
 // ===== ENUMS =====
 export const roleEnum = pgEnum('role', ['user', 'admin', 'doctor']);
@@ -43,20 +43,17 @@ export const users = pgTable('users', {
 });
 
 // ===== DOCTORS =====
-// ===== DOCTORS =====
 export const doctors = pgTable('doctors', {
   doctor_id: serial('doctor_id').primaryKey(),
   user_id: integer('user_id').references(() => users.user_id).notNull().unique(),
   specialization: varchar('specialization', { length: 150 }).notNull(),
   available_days: varchar('available_days', { length: 255 }).notNull(),
-  available_hours: jsonb('available_hours').$type<string[]>().default([]), // ✅ Correct and typed
+  available_hours: jsonb('available_hours').$type<string[]>().default([]),
   payment_per_hour: integer('payment_per_hour').notNull(),
   description: text('description').notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
-
-
 
 // ===== APPOINTMENTS =====
 export const appointments = pgTable('appointments', {
@@ -67,8 +64,8 @@ export const appointments = pgTable('appointments', {
   time_slot: time('time_slot').notNull(),
   total_amount: decimal('total_amount', { precision: 10, scale: 2 }),
   appointment_status: appointmentStatusEnum('appointment_status').default('Pending').notNull(),
+  payment_per_hour: decimal('payment_per_hour', { precision: 10, scale: 2 }).notNull().default(sql`0`),
 
-  payment_per_hour: decimal('payment_per_hour', { precision: 10, scale: 2 }).notNull().default(sql`0`), 
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -89,17 +86,11 @@ export const prescriptions = pgTable('prescriptions', {
 // ===== PAYMENTS =====
 export const payments = pgTable('payments', {
   payment_id: serial('payment_id').primaryKey(),
-
   appointment_id: integer('appointment_id').references(() => appointments.appointment_id).notNull(),
-
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-
   payment_status: paymentStatusEnum('payment_status').default('Pending').notNull(),
-
   transaction_id: varchar('transaction_id', { length: 255 }).notNull().unique(),
-
   payment_method: paymentMethodEnum('payment_method').notNull(),
-
   payment_date: timestamp('payment_date', { withTimezone: true }).defaultNow(),
 
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),

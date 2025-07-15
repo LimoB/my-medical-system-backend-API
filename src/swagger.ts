@@ -1,6 +1,6 @@
-import swaggerJsdoc, { Options } from 'swagger-jsdoc';
+import swaggerJsdoc, { type Options } from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import { Application } from 'express';
+import type { Application } from 'express';
 import fs from 'fs';
 import path from 'path';
 

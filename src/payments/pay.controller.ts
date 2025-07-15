@@ -1,5 +1,5 @@
 import { stripe } from './stripe'
-import { Request, Response } from 'express'
+import type { Request, Response } from 'express'
 import db from '@/drizzle/db'
 import { eq } from 'drizzle-orm'
 import { appointments } from '@/drizzle/schema'

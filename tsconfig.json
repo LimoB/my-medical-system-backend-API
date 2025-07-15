@@ -1,20 +1,23 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "outDir": "./dist",
-    "rootDir": ".",
-    "moduleResolution": "nodenext",
-    "strict": true,
-    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noEmit": true,                               // ✅ Required with allowImportingTsExtensions
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["jest"],
-    "isolatedModules": true,
+    "skipLibCheck": true,
+    "strict": true,
 
-    // Add these two for path aliasing
+    // Optional in noEmit mode
+    "types": ["jest"],
+
+    // ✅ Path aliases
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]

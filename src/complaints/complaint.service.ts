@@ -2,7 +2,7 @@
 import db from '@/drizzle/db'
 import { complaints } from '@/drizzle/schema'
 import { eq } from 'drizzle-orm'
-import {
+import type {
   TComplaintInsert,
   SanitizedPopulatedComplaint,
 } from '@/drizzle/types'

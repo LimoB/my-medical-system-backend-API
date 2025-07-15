@@ -1,5 +1,5 @@
-import { ZodError, AnyZodObject } from 'zod';
-import { Request, Response, NextFunction } from 'express';
+import { ZodError, type AnyZodObject } from 'zod';
+import type { Request, Response, NextFunction } from 'express';
 
 type Schemas = {
   body?: AnyZodObject | AnyZodObject[];

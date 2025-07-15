@@ -1,6 +1,6 @@
-import jwt, { SignOptions } from 'jsonwebtoken';
-import { Request, Response, NextFunction } from 'express';
-import ms, { StringValue } from 'ms';
+import jwt, { type SignOptions } from 'jsonwebtoken';
+import type { Request, Response, NextFunction } from 'express';
+import ms, { type StringValue } from 'ms';
 
 declare global {
   namespace Express {
