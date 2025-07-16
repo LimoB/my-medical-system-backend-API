@@ -7,9 +7,11 @@ import {
   payments,
   complaints,
   consultations,
+  doctorMeetings,
+  doctorMeetingAttendance,
 } from './schema';
 
-// === USERS ===
+// ===== USERS RELATIONS =====
 export const usersRelations = relations(users, ({ many, one }) => ({
   appointments: many(appointments),
   prescriptions: many(prescriptions),
@@ -21,7 +23,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   }),
 }));
 
-// === DOCTORS ===
+// ===== DOCTORS RELATIONS =====
 export const doctorsRelations = relations(doctors, ({ one, many }) => ({
   user: one(users, {
     fields: [doctors.user_id],
@@ -30,9 +32,10 @@ export const doctorsRelations = relations(doctors, ({ one, many }) => ({
   appointments: many(appointments),
   prescriptions: many(prescriptions),
   consultations: many(consultations),
+  meetingAttendance: many(doctorMeetingAttendance), // ✅ links to attendance table
 }));
 
-// === APPOINTMENTS ===
+// ===== APPOINTMENTS RELATIONS =====
 export const appointmentsRelations = relations(appointments, ({ one, many }) => ({
   user: one(users, {
     fields: [appointments.user_id],
@@ -51,7 +54,7 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
   }),
 }));
 
-// === CONSULTATIONS ===
+// ===== CONSULTATIONS RELATIONS =====
 export const consultationsRelations = relations(consultations, ({ one }) => ({
   appointment: one(appointments, {
     fields: [consultations.appointment_id],
@@ -67,7 +70,7 @@ export const consultationsRelations = relations(consultations, ({ one }) => ({
   }),
 }));
 
-// === PRESCRIPTIONS ===
+// ===== PRESCRIPTIONS RELATIONS =====
 export const prescriptionsRelations = relations(prescriptions, ({ one }) => ({
   appointment: one(appointments, {
     fields: [prescriptions.appointment_id],
@@ -83,7 +86,7 @@ export const prescriptionsRelations = relations(prescriptions, ({ one }) => ({
   }),
 }));
 
-// === PAYMENTS ===
+// ===== PAYMENTS RELATIONS =====
 export const paymentsRelations = relations(payments, ({ one }) => ({
   appointment: one(appointments, {
     fields: [payments.appointment_id],
@@ -91,7 +94,7 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   }),
 }));
 
-// === COMPLAINTS ===
+// ===== COMPLAINTS RELATIONS =====
 export const complaintsRelations = relations(complaints, ({ one }) => ({
   user: one(users, {
     fields: [complaints.user_id],
@@ -100,5 +103,22 @@ export const complaintsRelations = relations(complaints, ({ one }) => ({
   appointment: one(appointments, {
     fields: [complaints.related_appointment_id],
     references: [appointments.appointment_id],
+  }),
+}));
+
+// ===== DOCTOR MEETINGS RELATIONS =====
+export const doctorMeetingsRelations = relations(doctorMeetings, ({ many }) => ({
+  attendees: many(doctorMeetingAttendance), // ✅ 1:N relationship to attendance table
+}));
+
+// ===== DOCTOR MEETING ATTENDANCE RELATIONS =====
+export const doctorMeetingAttendanceRelations = relations(doctorMeetingAttendance, ({ one }) => ({
+  doctor: one(doctors, {
+    fields: [doctorMeetingAttendance.doctor_id],
+    references: [doctors.doctor_id],
+  }),
+  meeting: one(doctorMeetings, {
+    fields: [doctorMeetingAttendance.meeting_id],
+    references: [doctorMeetings.meeting_id],
   }),
 }));

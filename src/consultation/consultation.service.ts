@@ -11,11 +11,13 @@ import { sanitizeUser } from '@/utils/sanitize';
 // ────────────────────────────────
 // Create a new consultation
 // ────────────────────────────────
+
 export const createConsultationService = async (
   data: TConsultationInsert
 ): Promise<TConsultationSelect> => {
   const { appointment_id } = data;
 
+  // 1. Validate appointment
   const appointment = await db.query.appointments.findFirst({
     where: eq(appointments.appointment_id, appointment_id),
   });
@@ -28,6 +30,7 @@ export const createConsultationService = async (
     throw new Error('Consultation can only be created for completed appointments');
   }
 
+  // 2. Prevent duplicate consultation
   const existing = await db.query.consultations.findFirst({
     where: eq(consultations.appointment_id, appointment_id),
   });
@@ -36,9 +39,19 @@ export const createConsultationService = async (
     throw new Error('Consultation for this appointment already exists');
   }
 
-  const [inserted] = await db.insert(consultations).values(data).returning();
+  // 3. Insert consultation
+  const [inserted] = await db.insert(consultations).values({
+    ...data,
+    status: data.status ?? 'Completed', // uses new consultationStatusEnum
+  }).returning();
+
+  // ✅ No need to update appointment_status — it's already 'Completed'
+  // You now track consultation separately using the `consultations.status`
+
   return inserted;
 };
+
+
 
 // ────────────────────────────────
 // Get all consultations (Admin)

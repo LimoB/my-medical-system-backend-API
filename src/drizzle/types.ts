@@ -7,6 +7,8 @@ import {
   payments,
   complaints,
   consultations,
+  doctorMeetings,
+  doctorMeetingAttendance,
 } from './schema';
 
 import {
@@ -42,8 +44,18 @@ export type TComplaintSelect = typeof complaints.$inferSelect;
 export type TConsultationInsert = typeof consultations.$inferInsert;
 export type TConsultationSelect = typeof consultations.$inferSelect;
 
+export type TDoctorMeetingInsert = typeof doctorMeetings.$inferInsert;
+export type TDoctorMeetingSelect = typeof doctorMeetings.$inferSelect;
+
+export type TDoctorMeetingAttendanceInsert = typeof doctorMeetingAttendance.$inferInsert;
+export type TDoctorMeetingAttendanceSelect = typeof doctorMeetingAttendance.$inferSelect;
+
 // ========== Enums ==========
 export type PaymentMethod = 'stripe' | 'mpesa' | 'paypal' | 'cash';
+export type Role = 'user' | 'admin' | 'doctor';
+export type AppointmentStatus = 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
+export type ComplaintStatus = 'Open' | 'In Progress' | 'Resolved' | 'Closed';
+export type ConsultationStatus = 'Pending' | 'Completed';
 
 // ========== Extended / Populated Types ==========
 
@@ -75,6 +87,9 @@ export interface PopulatedDoctor extends TDoctorSelect {
     appointment?: TAppointmentSelect;
   })[];
   consultations?: TConsultationSelect[];
+  meetingAttendance?: (TDoctorMeetingAttendanceSelect & {
+    meeting?: TDoctorMeetingSelect;
+  })[];
 }
 
 export interface PopulatedAppointment extends TAppointmentSelect {
@@ -93,10 +108,10 @@ export interface PopulatedPrescription extends TPrescriptionSelect {
 }
 
 export interface PopulatedPayment extends TPaymentSelect {
-  appointment?: {
-    doctor?: TDoctorSelect & { user?: TUserSelect };
+  appointment?: TAppointmentSelect & {
     user?: TUserSelect;
-  } & TAppointmentSelect;
+    doctor?: TDoctorSelect;
+  };
 }
 
 export interface PopulatedComplaint extends TComplaintSelect {
@@ -110,6 +125,14 @@ export interface PopulatedConsultation extends TConsultationSelect {
   patient?: TUserSelect;
 }
 
+export interface PopulatedDoctorMeeting extends TDoctorMeetingSelect {
+  attendees?: (TDoctorMeetingAttendanceSelect & {
+    doctor?: TDoctorSelect & {
+      user?: TUserSelect;
+    };
+  })[];
+}
+
 // ========== Sanitized Variants ==========
 type SensitiveFields = 'password' | 'verification_token' | 'token_expiry';
 
@@ -117,7 +140,10 @@ export type SanitizedUser = Omit<TUserSelect, SensitiveFields>;
 
 export type SanitizedPopulatedUser = Omit<PopulatedUser, SensitiveFields>;
 
-export type SanitizedDoctor = Omit<PopulatedDoctor, 'user' | 'appointments' | 'prescriptions' | 'consultations'> & {
+export type SanitizedDoctor = Omit<
+  PopulatedDoctor,
+  'user' | 'appointments' | 'prescriptions' | 'consultations' | 'meetingAttendance'
+> & {
   user?: SanitizedUser;
   appointments?: (Omit<PopulatedAppointment, 'user'> & {
     user?: SanitizedUser;
@@ -126,6 +152,9 @@ export type SanitizedDoctor = Omit<PopulatedDoctor, 'user' | 'appointments' | 'p
     patient?: SanitizedUser;
   })[];
   consultations?: Omit<PopulatedConsultation, 'patient'>[];
+  meetingAttendance?: (TDoctorMeetingAttendanceSelect & {
+    meeting?: TDoctorMeetingSelect;
+  })[];
 };
 
 export type SanitizedAppointment = Omit<TAppointmentSelect, 'user' | 'doctor'> & {
@@ -144,17 +173,16 @@ export type SanitizedPrescription = Omit<PopulatedPrescription, 'doctor' | 'pati
   patient?: SanitizedUser;
 };
 
-export type SanitizedConsultation = Omit<PopulatedConsultation, 'patient' | 'doctor' | 'appointment'> & {
+export type SanitizedConsultation = Omit<PopulatedConsultation, 'appointment' | 'doctor' | 'patient'> & {
   appointment?: TAppointmentSelect;
   doctor?: TDoctorSelect;
   patient?: SanitizedUser;
 };
 
 export type SanitizedPayment = Omit<PopulatedPayment, 'appointment'> & {
-  appointment?: Omit<PopulatedPayment['appointment'], 'user' | 'doctor'> & {
+  appointment?: Omit<NonNullable<PopulatedPayment['appointment']>, 'user' | 'doctor'> & {
     user?: SanitizedUser;
     doctor?: TDoctorSelect;
-    doctor_user?: SanitizedUser;
   };
 };
 
@@ -164,16 +192,23 @@ export type SanitizedComplaint = Omit<PopulatedComplaint, 'user'> & {
 
 export type SanitizedPopulatedComplaint = Omit<
   PopulatedComplaint,
-  'user' | 'appointment'
+  'user' | 'related_appointment'
 > & {
   user?: SanitizedUser;
-  appointment?: TAppointmentSelect;
+  related_appointment?: TAppointmentSelect;
 };
 
-// ========== Utilities ==========
+export type SanitizedDoctorMeeting = Omit<PopulatedDoctorMeeting, 'attendees'> & {
+  attendees?: (Omit<NonNullable<PopulatedDoctorMeeting['attendees']>[number], 'doctor'> & {
+    doctor?: SanitizedDoctor;
+  })[];
+};
+
+// ========== Utility Types ==========
+
 export interface DoctorPatient {
   user: SanitizedUser;
   appointmentDate: TAppointmentSelect['appointment_date'];
   timeSlot: TAppointmentSelect['time_slot'];
   status: TAppointmentSelect['appointment_status'];
-};
+}

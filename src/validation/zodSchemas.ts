@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
 // ────────────────────────────────
-// ENUMS
+// ENUMS (Match Drizzle schema)
 // ────────────────────────────────
 export const roleEnum = z.enum(['user', 'admin', 'doctor']);
 export const appointmentStatusEnum = z.enum(['Pending', 'Confirmed', 'Cancelled', 'Completed']);
 export const complaintStatusEnum = z.enum(['Open', 'In Progress', 'Resolved', 'Closed']);
 export const paymentStatusEnum = z.enum(['Pending', 'Paid', 'Failed']);
-export const consultationStatusEnum = z.enum(['Ongoing', 'Completed']);
+export const consultationStatusEnum = z.enum(['Pending', 'Completed']); // ✅ FIXED
 export const paymentMethodEnum = z.enum(['stripe', 'mpesa', 'paypal', 'cash']);
 
 // ────────────────────────────────
@@ -20,6 +20,7 @@ export const newUserSchema = z.object({
   password: z.string().min(6),
   contact_phone: z.string().optional(),
   address: z.string().optional(),
+  date_of_birth: z.coerce.date().optional(), // ✅ Include since it's in schema
   role: roleEnum.optional().default('user'),
   image_url: z.string().url().optional(),
   is_verified: z.boolean().optional(),
@@ -35,6 +36,7 @@ export const updateUserSchema = z
     email: z.string().email().optional(),
     contact_phone: z.string().optional(),
     address: z.string().optional(),
+    date_of_birth: z.coerce.date().optional(),
     image_url: z.string().url().optional(),
     role: roleEnum.optional(),
     is_verified: z.boolean().optional(),
@@ -52,7 +54,7 @@ export const newDoctorSchema = z.object({
   user_id: z.number().int(),
   specialization: z.string().min(1),
   available_days: z.string().optional(),
-  available_hours: z.array(z.string()).optional(),
+  available_hours: z.array(z.string()).optional(), // matches `jsonb(string[])`
   payment_per_hour: z.number().positive(),
   description: z.string().optional(),
 });
@@ -72,6 +74,7 @@ export const newAppointmentSchema = z.object({
   total_amount: z.coerce.number().positive(),
   payment_per_hour: z.coerce.number().nonnegative().default(0),
   appointment_status: appointmentStatusEnum.optional().default('Pending'),
+  payment_method: paymentMethodEnum,
 });
 
 export const updateAppointmentStatusSchema = z.object({
@@ -90,7 +93,7 @@ export const newPrescriptionSchema = z.object({
 });
 
 // ────────────────────────────────
-// CONSULTATION SCHEMAS ✅
+// CONSULTATION SCHEMAS
 // ────────────────────────────────
 export const newConsultationSchema = z.object({
   appointment_id: z.number().int(),
@@ -99,7 +102,7 @@ export const newConsultationSchema = z.object({
   symptoms: z.string().optional(),
   diagnosis: z.string().min(1),
   treatment_plan: z.string().optional(),
-  additional_notes: z.string().optional(), // aligns with DB field
+  additional_notes: z.string().optional(),
   duration_minutes: z.number().int().positive().optional(),
   status: consultationStatusEnum.default('Completed'),
 });
@@ -116,7 +119,7 @@ export const newPaymentSchema = z.object({
 });
 
 // ────────────────────────────────
-// CHECKOUT SCHEMAS
+// CHECKOUT SCHEMA
 // ────────────────────────────────
 export const checkoutSchema = z.object({
   appointmentId: z.number().int().positive(),
@@ -131,4 +134,29 @@ export const newComplaintSchema = z.object({
   subject: z.string().min(1),
   description: z.string().min(1),
   status: complaintStatusEnum.optional().default('Open'),
+});
+
+// ────────────────────────────────
+// DOCTOR MEETING SCHEMAS
+// ────────────────────────────────
+export const newDoctorMeetingSchema = z.object({
+  title: z.string().min(1, { message: 'Title is required' }),
+  description: z.string().optional(),
+  meeting_date: z.coerce.date({ required_error: 'Meeting date is required' }),
+  meeting_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/, {
+      message: 'Meeting time must be in HH:MM or HH:MM:SS format',
+    }),
+  is_global: z.boolean().optional(), // ✅ included since in schema
+});
+
+// ────────────────────────────────
+// MEETING ATTENDANCE SCHEMAS
+// ────────────────────────────────
+export const newDoctorMeetingAttendanceSchema = z.object({
+  doctor_id: z.number().int({ message: 'Doctor ID must be an integer' }),
+  meeting_id: z.number().int({ message: 'Meeting ID must be an integer' }),
+  status: z.enum(['Pending', 'Attending', 'Not Attending']).optional(),
+  attended: z.boolean().optional(),
 });

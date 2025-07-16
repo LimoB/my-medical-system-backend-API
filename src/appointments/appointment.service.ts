@@ -143,18 +143,14 @@ export const getAppointmentByIdService = async (
 export const createAppointmentService = async (
   data: TAppointmentInsert
 ): Promise<TAppointmentSelect> => {
-  const { doctor_id, appointment_date, time_slot } = data;
+  const { doctor_id, appointment_date, time_slot, payment_method } = data;
 
-  // Check if the doctor is available on the given date and time
   const doctor = await db.query.doctors.findFirst({
     where: eq(doctors.doctor_id, doctor_id),
   });
 
-  if (!doctor) {
-    throw new Error('Doctor not found');
-  }
+  if (!doctor) throw new Error('Doctor not found');
 
-  // Type the available_hours as a string array
   const availableHours: string[] = doctor.available_hours as string[];
   const isSlotAvailable = availableHours.includes(time_slot);
 
@@ -162,14 +158,16 @@ export const createAppointmentService = async (
     throw new Error('This time slot is not available');
   }
 
-  // Proceed with inserting the appointment
+  // Optional logging
+  console.log(`Creating appointment with payment method: ${payment_method}`);
+
   const [inserted] = await db.insert(appointments).values(data).returning();
 
-  // Update the doctor's available hours after booking
   await updateDoctorAvailability(doctor_id, appointment_date, time_slot);
 
   return inserted;
 };
+
 
 // 🔹 Update doctor's availability after appointment
 export const updateDoctorAvailability = async (

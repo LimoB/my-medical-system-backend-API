@@ -12,6 +12,7 @@ import {
   decimal,
   boolean,
   jsonb,
+  unique,
 } from 'drizzle-orm/pg-core';
 
 // ===== ENUMS =====
@@ -23,6 +24,7 @@ export const paymentMethodEnum = pgEnum('payment_method', ['stripe', 'mpesa', 'p
 export const consultationStatusEnum = pgEnum('consultation_status', ['Pending', 'Completed']); // ✅ NEW
 
 // ===== USERS =====
+
 export const users = pgTable('users', {
   user_id: serial('user_id').primaryKey(),
   first_name: varchar('first_name', { length: 100 }).notNull(),
@@ -31,6 +33,7 @@ export const users = pgTable('users', {
   password: varchar('password', { length: 255 }).notNull(),
   contact_phone: varchar('contact_phone', { length: 20 }),
   address: text('address'),
+  date_of_birth: date('date_of_birth'), // ✅ New field added
   role: roleEnum('role').default('user').notNull(),
   image_url: text('image_url'),
   is_verified: boolean('is_verified').default(false).notNull(),
@@ -40,6 +43,7 @@ export const users = pgTable('users', {
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
+
 
 // ===== DOCTORS =====
 export const doctors = pgTable('doctors', {
@@ -64,6 +68,8 @@ export const appointments = pgTable('appointments', {
   total_amount: decimal('total_amount', { precision: 10, scale: 2 }),
   appointment_status: appointmentStatusEnum('appointment_status').default('Pending').notNull(),
   payment_per_hour: decimal('payment_per_hour', { precision: 10, scale: 2 }).notNull().default(sql`0`),
+  payment_method: paymentMethodEnum('payment_method').notNull(), // ✅ ADD THIS
+
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -120,3 +126,28 @@ export const complaints = pgTable('complaints', {
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
+
+
+// ===== DOCTOR MEETINGS =====
+export const doctorMeetings = pgTable('doctor_meetings', {
+  meeting_id: serial('meeting_id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  meeting_date: date('meeting_date').notNull(),
+  meeting_time: time('meeting_time').notNull(),
+  is_global: boolean('is_global').default(false).notNull(), // ✅ New field to track "all doctors"
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+
+export const doctorMeetingAttendance = pgTable('doctor_meeting_attendance', {
+  id: serial('id').primaryKey(),
+  doctor_id: integer('doctor_id').references(() => doctors.doctor_id).notNull(),
+  meeting_id: integer('meeting_id').references(() => doctorMeetings.meeting_id).notNull(),
+  status: varchar('status', { length: 20 }).default('Pending'),
+  attended: boolean('attended').default(false),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  uniqueDoctorMeeting: unique().on(table.doctor_id, table.meeting_id),
+}));

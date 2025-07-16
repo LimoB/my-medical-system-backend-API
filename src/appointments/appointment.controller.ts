@@ -143,6 +143,7 @@ export const getAppointmentsByUser = async (
 };
 
 // 🔹 POST /api/appointments - Authenticated users (user or doctor)
+// 🔹 POST /api/appointments - Authenticated users (user or doctor)
 export const createAppointment = async (
   req: Request,
   res: Response,
@@ -151,13 +152,18 @@ export const createAppointment = async (
   const appointmentData = req.body;
   console.log('POST /api/appointments hit with:', appointmentData);
 
-  if (
-    !appointmentData.user_id ||
-    !appointmentData.doctor_id ||
-    !appointmentData.appointment_date ||
-    !appointmentData.time_slot
-  ) {
-    res.status(400).json({ error: 'Missing required fields' });
+  const requiredFields = [
+    'user_id',
+    'doctor_id',
+    'appointment_date',
+    'time_slot',
+    'payment_method',
+  ];
+
+  const missingFields = requiredFields.filter((field) => !appointmentData[field]);
+
+  if (missingFields.length > 0) {
+    res.status(400).json({ error: `Missing required fields: ${missingFields.join(', ')}` });
     return;
   }
 
@@ -169,6 +175,7 @@ export const createAppointment = async (
     next(error);
   }
 };
+
 
 
 
@@ -194,7 +201,7 @@ export const updateAppointmentStatus = async (
   }
 
   // ✅ Validate Status
-  const validStatuses = ['Pending', 'Confirmed', 'Cancelled'];
+  const validStatuses = ['Pending', 'Confirmed', 'Cancelled', 'Completed'];
   if (!validStatuses.includes(status)) {
     res.status(400).json({ error: 'Invalid status value' });
     return;

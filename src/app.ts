@@ -10,6 +10,8 @@ import doctorRouter from "@/doctors/doctor.route";
 import paymentRouter from "@/payments/payment.route";
 import prescriptionRouter from "./prescriptions/prescription.route";
 import dashboardRouter from "./dashboard/dashboard.route";
+import consultationsRouter from "./consultation/consultation.routes";
+import meetingRouter from "./doctors/doctorMeeting.route";
 
 
 
@@ -48,6 +50,8 @@ app.use("/api", doctorRouter);
 app.use("/api", paymentRouter);
 app.use("/api", prescriptionRouter);
 app.use("/api", dashboardRouter);
+app.use("/api", consultationsRouter);
+app.use("/api", meetingRouter);
 
 
 

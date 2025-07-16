@@ -273,6 +273,8 @@ export const deleteDoctorService = async (
   }
 };
 
+
+
 // 🔹 Get all patients of a doctor
 export const getDoctorPatientsService = async (
   doctorId: number
@@ -294,6 +296,7 @@ export const getDoctorPatientsService = async (
         address: schema.users.address,
         is_verified: schema.users.is_verified,
         last_login: schema.users.last_login,
+        date_of_birth: schema.users.date_of_birth, // ✅ Include DOB
         created_at: schema.users.created_at,
         updated_at: schema.users.updated_at,
         appointmentDate: schema.appointments.appointment_date,
@@ -326,6 +329,7 @@ export const getDoctorPatientsService = async (
         address: row.address,
         is_verified: row.is_verified,
         last_login: row.last_login,
+        date_of_birth: row.date_of_birth, // ✅ Pass to sanitizer
         created_at: row.created_at,
         updated_at: row.updated_at,
         password: '',
@@ -341,6 +345,7 @@ export const getDoctorPatientsService = async (
     throw new Error('Failed to fetch doctor patients');
   }
 };
+
 
 // 🔹 Delete all appointments of a patient by doctor
 export const deleteDoctorPatientService = async (
