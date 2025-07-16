@@ -75,7 +75,11 @@ export const newAppointmentSchema = z.object({
   payment_per_hour: z.coerce.number().nonnegative().default(0),
   appointment_status: appointmentStatusEnum.optional().default('Pending'),
   payment_method: paymentMethodEnum,
+
+  // New reason field added
+  reason: z.string().max(255).optional(), // You can use .nullable() if you want to explicitly allow nulls
 });
+
 
 export const updateAppointmentStatusSchema = z.object({
   status: appointmentStatusEnum,

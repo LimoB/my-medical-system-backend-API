@@ -58,6 +58,8 @@ export const doctors = pgTable('doctors', {
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+
+
 // ===== APPOINTMENTS =====
 export const appointments = pgTable('appointments', {
   appointment_id: serial('appointment_id').primaryKey(),
@@ -68,11 +70,15 @@ export const appointments = pgTable('appointments', {
   total_amount: decimal('total_amount', { precision: 10, scale: 2 }),
   appointment_status: appointmentStatusEnum('appointment_status').default('Pending').notNull(),
   payment_per_hour: decimal('payment_per_hour', { precision: 10, scale: 2 }).notNull().default(sql`0`),
-  payment_method: paymentMethodEnum('payment_method').notNull(), // ✅ ADD THIS
+  payment_method: paymentMethodEnum('payment_method').notNull(),
+  
+  // Make reason nullable by assigning it a union type of string | null
+  reason: text('reason').default(sql`NULL`),  // You can use this to ensure the column is nullable
 
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
+
 
 // ===== CONSULTATIONS =====
 export const consultations = pgTable('consultations', {
