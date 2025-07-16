@@ -116,6 +116,7 @@ export const getConsultationById = async (req: Request, res: Response, next: Nex
   }
 };
 
+
 // 🔹 GET /api/consultations/appointment/:appointmentId - Authenticated
 export const getConsultationByAppointmentId = async (req: Request, res: Response, next: NextFunction) => {
   const appointmentId = parseInt(req.params.appointmentId, 10);
@@ -126,26 +127,40 @@ export const getConsultationByAppointmentId = async (req: Request, res: Response
   }
 
   try {
-    const consultation = await getConsultationByAppointmentIdService(appointmentId);
+    const consultations = await getConsultationByAppointmentIdService(appointmentId);
 
-    if (!consultation) {
+    // Assuming the result is an array, you might want to return an array or handle multiple results
+    if (!consultations || consultations.length === 0) {
       return res.status(404).json({ message: 'Consultation not found for this appointment' });
     }
 
+    // If multiple consultations, access each consultation
+    const consultation = consultations[0]; // Use the first consultation if multiple
+
     const isAdmin = user?.role === 'admin';
-    const isDoctor = user?.role === 'doctor' && consultation.doctor?.user_id === user.userId;
-    const isPatient = user?.role === 'user' && consultation.patient?.user_id === user.userId;
+    const isDoctor =
+      user?.role === 'doctor' &&
+      consultation.doctor?.user_id && // Check if doctor exists
+      consultation.doctor.user_id === user.userId;
+
+    const isPatient =
+      user?.role === 'user' &&
+      consultation.patient?.user_id && // Check if patient exists
+      consultation.patient.user_id === user.userId;
 
     if (!isAdmin && !isDoctor && !isPatient) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    // Return the consultation object to the user
     res.status(200).json(consultation);
   } catch (err) {
     console.error('Error in getConsultationByAppointmentId:', err);
     next(err);
   }
 };
+
+
 
 // 🔹 DELETE /api/consultations/:id - Admin only
 export const deleteConsultation = async (req: Request, res: Response, next: NextFunction) => {

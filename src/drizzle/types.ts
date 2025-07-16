@@ -56,9 +56,9 @@ export type Role = 'user' | 'admin' | 'doctor';
 export type AppointmentStatus = 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
 export type ComplaintStatus = 'Open' | 'In Progress' | 'Resolved' | 'Closed';
 export type ConsultationStatus = 'Pending' | 'Completed';
+export type ConsultationType = 'initial' | 'follow-up' | 'review'; // New ConsultationType enum
 
 // ========== Extended / Populated Types ==========
-
 export interface PopulatedUser extends TUserSelect {
   appointments?: TAppointmentSelect[];
   prescriptions?: TPrescriptionSelect[];
@@ -80,7 +80,7 @@ export interface PopulatedDoctor extends TDoctorSelect {
     user?: TUserSelect;
     complaints?: TComplaintSelect[];
     payments?: TPaymentSelect[];
-    consultation?: TConsultationSelect;
+    consultations?: TConsultationSelect[]; // Updated to include multiple consultations
   })[];
   prescriptions?: (TPrescriptionSelect & {
     patient?: TUserSelect;
@@ -98,7 +98,7 @@ export interface PopulatedAppointment extends TAppointmentSelect {
   prescriptions?: TPrescriptionSelect[];
   payments?: TPaymentSelect[];
   complaints?: TComplaintSelect[];
-  consultation?: TConsultationSelect;
+  consultations?: TConsultationSelect[]; // Updated to allow multiple consultations
 }
 
 export interface PopulatedPrescription extends TPrescriptionSelect {
@@ -165,7 +165,7 @@ export type SanitizedAppointment = Omit<TAppointmentSelect, 'user' | 'doctor'> &
   prescriptions?: TPrescriptionSelect[];
   payments?: TPaymentSelect[];
   complaints?: TComplaintSelect[];
-  consultation?: TConsultationSelect;
+  consultations?: TConsultationSelect[]; // Multiple consultations allowed
 };
 
 export type SanitizedPrescription = Omit<PopulatedPrescription, 'doctor' | 'patient'> & {
@@ -199,13 +199,12 @@ export type SanitizedPopulatedComplaint = Omit<
 };
 
 export type SanitizedDoctorMeeting = Omit<PopulatedDoctorMeeting, 'attendees'> & {
-  attendees?: (Omit<NonNullable<PopulatedDoctorMeeting['attendees']>[number], 'doctor'> & {
+  attendees?: Array<Omit<NonNullable<PopulatedDoctorMeeting['attendees']>[number], 'doctor'> & {
     doctor?: SanitizedDoctor;
-  })[];
+  }>;
 };
 
 // ========== Utility Types ==========
-
 export interface DoctorPatient {
   user: SanitizedUser;
   appointmentDate: TAppointmentSelect['appointment_date'];

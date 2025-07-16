@@ -7,6 +7,8 @@ import type {
   SanitizedConsultation,
 } from '@/drizzle/types';
 import { sanitizeUser } from '@/utils/sanitize';
+import { sanitizeDoctor } from '@/utils/sanitize'; // Assuming sanitizeDoctor function exists
+
 
 // ────────────────────────────────
 // Create a new consultation
@@ -30,28 +32,14 @@ export const createConsultationService = async (
     throw new Error('Consultation can only be created for completed appointments');
   }
 
-  // 2. Prevent duplicate consultation
-  const existing = await db.query.consultations.findFirst({
-    where: eq(consultations.appointment_id, appointment_id),
-  });
-
-  if (existing) {
-    throw new Error('Consultation for this appointment already exists');
-  }
-
-  // 3. Insert consultation
+  // 2. Insert consultation (No check for existing consultation to allow multiple consultations)
   const [inserted] = await db.insert(consultations).values({
     ...data,
     status: data.status ?? 'Completed', // uses new consultationStatusEnum
   }).returning();
 
-  // ✅ No need to update appointment_status — it's already 'Completed'
-  // You now track consultation separately using the `consultations.status`
-
   return inserted;
 };
-
-
 
 // ────────────────────────────────
 // Get all consultations (Admin)
@@ -61,16 +49,18 @@ export const getAllConsultationsService = async (): Promise<SanitizedConsultatio
     orderBy: desc(consultations.created_at),
     with: {
       appointment: true,
-      doctor: true,
-      patient: true,
+      doctor: true,  // Ensure this is included
+      patient: true, // Ensure this is included
     },
   });
 
   return results.map((consultation) => ({
     ...consultation,
-    patient: consultation.patient ? sanitizeUser(consultation.patient) : undefined,
+    patient: consultation.patient ? sanitizeUser(consultation.patient) : undefined, // Sanitizing patient
+    doctor: consultation.doctor ? sanitizeDoctor(consultation.doctor) : undefined, // Sanitizing doctor
   }));
 };
+
 
 // ────────────────────────────────
 // Get consultations by doctor_id
@@ -142,8 +132,8 @@ export const getConsultationByIdService = async (
 // ────────────────────────────────
 export const getConsultationByAppointmentIdService = async (
   appointmentId: number
-): Promise<SanitizedConsultation | null> => {
-  const result = await db.query.consultations.findFirst({
+): Promise<SanitizedConsultation[] | null> => {
+  const results = await db.query.consultations.findMany({
     where: eq(consultations.appointment_id, appointmentId),
     with: {
       appointment: true,
@@ -152,12 +142,12 @@ export const getConsultationByAppointmentIdService = async (
     },
   });
 
-  if (!result) return null;
+  if (!results) return null;
 
-  return {
-    ...result,
-    patient: result.patient ? sanitizeUser(result.patient) : undefined,
-  };
+  return results.map((consultation) => ({
+    ...consultation,
+    patient: consultation.patient ? sanitizeUser(consultation.patient) : undefined,
+  }));
 };
 
 // ────────────────────────────────

@@ -16,7 +16,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   appointments: many(appointments),
   prescriptions: many(prescriptions),
   complaints: many(complaints),
-  consultations: many(consultations),
+  consultations: many(consultations), // Multiple consultations allowed
   doctor: one(doctors, {
     fields: [users.user_id],
     references: [doctors.user_id],
@@ -31,8 +31,8 @@ export const doctorsRelations = relations(doctors, ({ one, many }) => ({
   }),
   appointments: many(appointments),
   prescriptions: many(prescriptions),
-  consultations: many(consultations),
-  meetingAttendance: many(doctorMeetingAttendance), // ✅ links to attendance table
+  consultations: many(consultations), // Multiple consultations allowed
+  meetingAttendance: many(doctorMeetingAttendance), // Links to attendance table
 }));
 
 // ===== APPOINTMENTS RELATIONS =====
@@ -48,10 +48,7 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
   prescriptions: many(prescriptions),
   payments: many(payments),
   complaints: many(complaints),
-  consultation: one(consultations, {
-    fields: [appointments.appointment_id],
-    references: [consultations.appointment_id],
-  }),
+  consultations: many(consultations), // Multiple consultations per appointment
 }));
 
 // ===== CONSULTATIONS RELATIONS =====
@@ -108,7 +105,7 @@ export const complaintsRelations = relations(complaints, ({ one }) => ({
 
 // ===== DOCTOR MEETINGS RELATIONS =====
 export const doctorMeetingsRelations = relations(doctorMeetings, ({ many }) => ({
-  attendees: many(doctorMeetingAttendance), // ✅ 1:N relationship to attendance table
+  attendees: many(doctorMeetingAttendance), // 1:N relationship to attendance table
 }));
 
 // ===== DOCTOR MEETING ATTENDANCE RELATIONS =====

@@ -21,10 +21,10 @@ export const appointmentStatusEnum = pgEnum('appointment_status', ['Pending', 'C
 export const complaintStatusEnum = pgEnum('complaint_status', ['Open', 'In Progress', 'Resolved', 'Closed']);
 export const paymentStatusEnum = pgEnum('payment_status', ['Pending', 'Paid', 'Failed']);
 export const paymentMethodEnum = pgEnum('payment_method', ['stripe', 'mpesa', 'paypal', 'cash']);
-export const consultationStatusEnum = pgEnum('consultation_status', ['Pending', 'Completed']); // ✅ NEW
+export const consultationStatusEnum = pgEnum('consultation_status', ['Pending', 'Completed']);
+export const consultationTypeEnum = pgEnum('consultation_type', ['initial', 'follow-up', 'review']); // Added consultation type enum
 
 // ===== USERS =====
-
 export const users = pgTable('users', {
   user_id: serial('user_id').primaryKey(),
   first_name: varchar('first_name', { length: 100 }).notNull(),
@@ -44,7 +44,6 @@ export const users = pgTable('users', {
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-
 // ===== DOCTORS =====
 export const doctors = pgTable('doctors', {
   doctor_id: serial('doctor_id').primaryKey(),
@@ -58,8 +57,6 @@ export const doctors = pgTable('doctors', {
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-
-
 // ===== APPOINTMENTS =====
 export const appointments = pgTable('appointments', {
   appointment_id: serial('appointment_id').primaryKey(),
@@ -71,19 +68,15 @@ export const appointments = pgTable('appointments', {
   appointment_status: appointmentStatusEnum('appointment_status').default('Pending').notNull(),
   payment_per_hour: decimal('payment_per_hour', { precision: 10, scale: 2 }).notNull().default(sql`0`),
   payment_method: paymentMethodEnum('payment_method').notNull(),
-  
-  // Make reason nullable by assigning it a union type of string | null
-  reason: text('reason').default(sql`NULL`),  // You can use this to ensure the column is nullable
-
+  reason: text('reason').default(sql`NULL`),  // Made nullable
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-
 // ===== CONSULTATIONS =====
 export const consultations = pgTable('consultations', {
   consultation_id: serial('consultation_id').primaryKey(),
-  appointment_id: integer('appointment_id').references(() => appointments.appointment_id).notNull().unique(),
+  appointment_id: integer('appointment_id').references(() => appointments.appointment_id).notNull(),  // Removed unique constraint
   doctor_id: integer('doctor_id').references(() => doctors.doctor_id).notNull(),
   patient_id: integer('patient_id').references(() => users.user_id).notNull(),
   symptoms: text('symptoms'),
@@ -91,6 +84,7 @@ export const consultations = pgTable('consultations', {
   treatment_plan: text('treatment_plan'),
   additional_notes: text('additional_notes'),
   duration_minutes: integer('duration_minutes'),
+  consultation_type: consultationTypeEnum('consultation_type').default('initial').notNull(),  // Added consultation type
   status: consultationStatusEnum('status').default('Completed').notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -133,7 +127,6 @@ export const complaints = pgTable('complaints', {
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-
 // ===== DOCTOR MEETINGS =====
 export const doctorMeetings = pgTable('doctor_meetings', {
   meeting_id: serial('meeting_id').primaryKey(),
@@ -141,12 +134,12 @@ export const doctorMeetings = pgTable('doctor_meetings', {
   description: text('description'),
   meeting_date: date('meeting_date').notNull(),
   meeting_time: time('meeting_time').notNull(),
-  is_global: boolean('is_global').default(false).notNull(), // ✅ New field to track "all doctors"
+  is_global: boolean('is_global').default(false).notNull(), // Added field to track global meetings
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
-
+// ===== DOCTOR MEETING ATTENDANCE =====
 export const doctorMeetingAttendance = pgTable('doctor_meeting_attendance', {
   id: serial('id').primaryKey(),
   doctor_id: integer('doctor_id').references(() => doctors.doctor_id).notNull(),
@@ -155,5 +148,5 @@ export const doctorMeetingAttendance = pgTable('doctor_meeting_attendance', {
   attended: boolean('attended').default(false),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
-  uniqueDoctorMeeting: unique().on(table.doctor_id, table.meeting_id),
+  uniqueDoctorMeeting: unique().on(table.doctor_id, table.meeting_id),  // Ensure unique attendance
 }));
