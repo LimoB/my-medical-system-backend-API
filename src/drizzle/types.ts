@@ -16,6 +16,7 @@ import {
   newUserSchema,
   updateUserSchema,
 } from '@/validation/zodSchemas';
+import type { sanitizeUser } from '@/utils/sanitize';
 
 // ========== Zod Input Types ==========
 export type NewUserInput = z.infer<typeof newUserSchema>;
@@ -56,7 +57,7 @@ export type Role = 'user' | 'admin' | 'doctor';
 export type AppointmentStatus = 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
 export type ComplaintStatus = 'Open' | 'In Progress' | 'Resolved' | 'Closed';
 export type ConsultationStatus = 'Pending' | 'Completed';
-export type ConsultationType = 'initial' | 'follow-up' | 'review'; // New ConsultationType enum
+export type ConsultationType = 'initial' | 'follow-up' | 'review';
 
 // ========== Extended / Populated Types ==========
 export interface PopulatedUser extends TUserSelect {
@@ -80,7 +81,7 @@ export interface PopulatedDoctor extends TDoctorSelect {
     user?: TUserSelect;
     complaints?: TComplaintSelect[];
     payments?: TPaymentSelect[];
-    consultations?: TConsultationSelect[]; // Updated to include multiple consultations
+    consultations?: TConsultationSelect[];
   })[];
   prescriptions?: (TPrescriptionSelect & {
     patient?: TUserSelect;
@@ -98,7 +99,7 @@ export interface PopulatedAppointment extends TAppointmentSelect {
   prescriptions?: TPrescriptionSelect[];
   payments?: TPaymentSelect[];
   complaints?: TComplaintSelect[];
-  consultations?: TConsultationSelect[]; // Updated to allow multiple consultations
+  consultations?: TConsultationSelect[];
 }
 
 export interface PopulatedPrescription extends TPrescriptionSelect {
@@ -165,12 +166,27 @@ export type SanitizedAppointment = Omit<TAppointmentSelect, 'user' | 'doctor'> &
   prescriptions?: TPrescriptionSelect[];
   payments?: TPaymentSelect[];
   complaints?: TComplaintSelect[];
-  consultations?: TConsultationSelect[]; // Multiple consultations allowed
+  consultations?: TConsultationSelect[];
 };
 
-export type SanitizedPrescription = Omit<PopulatedPrescription, 'doctor' | 'patient'> & {
-  doctor?: TDoctorSelect;
-  patient?: SanitizedUser;
+// ✅ UPDATED TYPE
+export type SanitizedPrescription = Omit<PopulatedPrescription, 'doctor' | 'patient' | 'appointment'> & {
+  appointment?: {
+    appointment_id: number;
+    appointment_date: string;
+    time_slot: string;
+    appointment_status: AppointmentStatus;
+    payment_method: PaymentMethod;
+    reason: string | null;
+    created_at: Date | null;
+    updated_at: Date | null;
+    user_id: number;
+    doctor_id?: number;
+    payment_per_hour?: string;
+    total_amount?: string | null;
+  };
+  doctor?: ReturnType<typeof sanitizeUser>;
+  patient?: ReturnType<typeof sanitizeUser>;
 };
 
 export type SanitizedConsultation = Omit<PopulatedConsultation, 'appointment' | 'doctor' | 'patient'> & {
@@ -190,7 +206,6 @@ export type SanitizedComplaint = Omit<PopulatedComplaint, 'user'> & {
   user?: SanitizedUser;
 };
 
-
 export type SanitizedPopulatedComplaint = Omit<
   PopulatedComplaint,
   'user' | 'related_appointment'
@@ -198,7 +213,6 @@ export type SanitizedPopulatedComplaint = Omit<
   user?: SanitizedUser;
   appointment?: TAppointmentSelect;
 };
-
 
 export type SanitizedDoctorMeeting = Omit<PopulatedDoctorMeeting, 'attendees'> & {
   attendees?: Array<Omit<NonNullable<PopulatedDoctorMeeting['attendees']>[number], 'doctor'> & {

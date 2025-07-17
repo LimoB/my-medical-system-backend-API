@@ -6,6 +6,50 @@ import {
   updatePrescriptionService,
   deletePrescriptionService,
 } from '@/prescriptions/prescription.service'
+import { getPrescriptionsByUserIdService } from '@/prescriptions/prescription.service';
+
+
+// 🔹 GET /api/prescriptions/user/:userId - Only the user themselves, doctor, or admin
+export const getPrescriptionsByUserId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const userId = parseInt(req.params.userId, 10);
+  console.log(`GET /api/prescriptions/user/${userId} hit`);
+
+  if (isNaN(userId)) {
+    res.status(400).json({ error: 'Invalid user ID' });
+    return;
+  }
+
+  const requesterId = req.user?.userId;
+  const requesterRole = req.user?.role;
+
+  if (
+    requesterRole !== 'admin' &&
+    requesterRole !== 'doctor' &&
+    requesterId !== userId
+  ) {
+    res.status(403).json({ error: 'Access denied' });
+    return;
+  }
+
+  try {
+    const prescriptions = await getPrescriptionsByUserIdService(userId);
+
+    if (!prescriptions || prescriptions.length === 0) {
+      res.status(404).json({ message: 'No prescriptions found for user' });
+      return;
+    }
+
+    res.status(200).json(prescriptions);
+  } catch (error) {
+    console.error(`Error in getPrescriptionsByUserIdController:`, error);
+    next(error);
+  }
+};
+
 
 // 🔹 GET /api/prescriptions - Admin or doctor only
 export const getPrescriptions = async (

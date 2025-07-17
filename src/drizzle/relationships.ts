@@ -67,6 +67,8 @@ export const consultationsRelations = relations(consultations, ({ one }) => ({
   }),
 }));
 
+
+
 // ===== PRESCRIPTIONS RELATIONS =====
 export const prescriptionsRelations = relations(prescriptions, ({ one }) => ({
   appointment: one(appointments, {
@@ -76,12 +78,15 @@ export const prescriptionsRelations = relations(prescriptions, ({ one }) => ({
   doctor: one(doctors, {
     fields: [prescriptions.doctor_id],
     references: [doctors.doctor_id],
+    relationName: 'doctor', // Optional: explicitly name the relation
   }),
   patient: one(users, {
     fields: [prescriptions.patient_id],
     references: [users.user_id],
+    relationName: 'patient', // Optional: explicitly name the relation
   }),
 }));
+
 
 // ===== PAYMENTS RELATIONS =====
 export const paymentsRelations = relations(payments, ({ one }) => ({

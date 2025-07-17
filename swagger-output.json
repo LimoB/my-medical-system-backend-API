@@ -1472,6 +1472,40 @@
         }
       }
     },
+    "/prescriptions/user/{userId}": {
+      "get": {
+        "summary": "Get prescriptions by user ID (admin, doctor, or that user)",
+        "tags": [
+          "Prescriptions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prescriptions found"
+          },
+          "403": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "No prescriptions found"
+          }
+        }
+      }
+    },
     "/prescriptions/{id}": {
       "get": {
         "summary": "Get a prescription by ID (any logged-in user — doctor, admin, or patient)",

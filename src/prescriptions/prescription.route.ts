@@ -7,6 +7,10 @@ import {
   deletePrescription,
 } from '@/prescriptions/prescription.controller';
 
+
+import { getPrescriptionsByUserId } from '@/prescriptions/prescription.controller';
+
+
 import { adminAuth, doctorAuth, anyRoleAuth, adminOrDoctorAuth } from '@/middleware/bearAuth';
 import validate from '@/middleware/validate';
 import { newPrescriptionSchema } from '@/validation/zodSchemas';
@@ -35,6 +39,32 @@ const prescriptionRouter = express.Router();
  *         description: Forbidden
  */
 prescriptionRouter.get('/prescriptions', adminOrDoctorAuth, getPrescriptions);
+
+
+/**
+ * @swagger
+ * /prescriptions/user/{userId}:
+ *   get:
+ *     summary: Get prescriptions by user ID (admin, doctor, or that user)
+ *     tags: [Prescriptions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: userId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Prescriptions found
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: No prescriptions found
+ */
+prescriptionRouter.get('/prescriptions/user/:userId', anyRoleAuth, getPrescriptionsByUserId);
+
 
 /**
  * @swagger
