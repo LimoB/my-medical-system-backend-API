@@ -94,16 +94,20 @@ export const getConsultationById = async (req: Request, res: Response, next: Nex
     return res.status(400).json({ error: 'Invalid consultation ID' });
   }
 
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized: User not found' });
+  }
+
   try {
-    const consultation = await getConsultationByIdService(id);
+    const consultation = await getConsultationByIdService(id, user.userId); // ✅ Safe now
 
     if (!consultation) {
       return res.status(404).json({ message: 'Consultation not found' });
     }
 
-    const isAdmin = user?.role === 'admin';
-    const isDoctor = user?.role === 'doctor' && consultation.doctor?.user_id === user.userId;
-    const isPatient = user?.role === 'user' && consultation.patient?.user_id === user.userId;
+    const isAdmin = user.role === 'admin';
+    const isDoctor = user.role === 'doctor' && consultation.doctor?.user_id === user.userId;
+    const isPatient = user.role === 'user' && consultation.patient?.user_id === user.userId;
 
     if (!isAdmin && !isDoctor && !isPatient) {
       return res.status(403).json({ error: 'Access denied' });
@@ -129,12 +133,10 @@ export const getConsultationByAppointmentId = async (req: Request, res: Response
   try {
     const consultations = await getConsultationByAppointmentIdService(appointmentId);
 
-    // Assuming the result is an array, you might want to return an array or handle multiple results
     if (!consultations || consultations.length === 0) {
       return res.status(404).json({ message: 'Consultation not found for this appointment' });
     }
 
-    // If multiple consultations, access each consultation
     const consultation = consultations[0]; // Use the first consultation if multiple
 
     const isAdmin = user?.role === 'admin';
@@ -160,8 +162,6 @@ export const getConsultationByAppointmentId = async (req: Request, res: Response
   }
 };
 
-
-
 // 🔹 DELETE /api/consultations/:id - Admin only
 export const deleteConsultation = async (req: Request, res: Response, next: NextFunction) => {
   const consultationId = parseInt(req.params.id, 10);
@@ -175,7 +175,7 @@ export const deleteConsultation = async (req: Request, res: Response, next: Next
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const deleted = await deleteConsultationService(consultationId);
+    const deleted = await deleteConsultationService(consultationId, req.user?.userId);
     if (deleted) {
       res.status(200).json({ message: 'Consultation deleted successfully' });
     } else {

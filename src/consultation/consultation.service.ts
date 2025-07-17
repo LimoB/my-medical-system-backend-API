@@ -9,11 +9,9 @@ import type {
 import { sanitizeUser } from '@/utils/sanitize';
 import { sanitizeDoctor } from '@/utils/sanitize'; // Assuming sanitizeDoctor function exists
 
-
 // ────────────────────────────────
 // Create a new consultation
 // ────────────────────────────────
-
 export const createConsultationService = async (
   data: TConsultationInsert
 ): Promise<TConsultationSelect> => {
@@ -35,7 +33,7 @@ export const createConsultationService = async (
   // 2. Insert consultation (No check for existing consultation to allow multiple consultations)
   const [inserted] = await db.insert(consultations).values({
     ...data,
-    status: data.status ?? 'Completed', // uses new consultationStatusEnum
+    status: data.status ?? 'Completed', // Uses new consultationStatusEnum
   }).returning();
 
   return inserted;
@@ -60,7 +58,6 @@ export const getAllConsultationsService = async (): Promise<SanitizedConsultatio
     doctor: consultation.doctor ? sanitizeDoctor(consultation.doctor) : undefined, // Sanitizing doctor
   }));
 };
-
 
 // ────────────────────────────────
 // Get consultations by doctor_id
@@ -100,15 +97,16 @@ export const getConsultationsByPatientIdService = async (
 
   return results.map((consultation) => ({
     ...consultation,
-    patient: undefined, // intentionally sanitized
+    patient: undefined, // Intentionally sanitized
   }));
 };
 
 // ────────────────────────────────
-// Get a single consultation by ID
+// Get a single consultation by ID with authorization check
 // ────────────────────────────────
 export const getConsultationByIdService = async (
-  consultationId: number
+  consultationId: number,
+  userId: number // Pass the logged-in doctor's user ID
 ): Promise<SanitizedConsultation | null> => {
   const result = await db.query.consultations.findFirst({
     where: eq(consultations.consultation_id, consultationId),
@@ -120,6 +118,11 @@ export const getConsultationByIdService = async (
   });
 
   if (!result) return null;
+
+  // Check if the logged-in doctor is the one who owns this consultation
+  if (result.doctor?.user_id !== userId) {
+    throw new Error('Access denied. This consultation does not belong to you.');
+  }
 
   return {
     ...result,
@@ -151,13 +154,56 @@ export const getConsultationByAppointmentIdService = async (
 };
 
 // ────────────────────────────────
-// Delete consultation by ID
+// Delete consultation by ID with authorization check
 // ────────────────────────────────
 export const deleteConsultationService = async (
-  consultationId: number
+  consultationId: number,
+  userId: number // Pass the logged-in doctor's user ID
 ): Promise<boolean> => {
+  // Fetch consultation to check ownership
+  const consultation = await db.query.consultations.findFirst({
+    where: eq(consultations.consultation_id, consultationId),
+    with: {
+      doctor: true,
+    },
+  });
+
+  if (!consultation || consultation.doctor?.user_id !== userId) {
+    throw new Error('Access denied. This consultation does not belong to you.');
+  }
+
   const deleted = await db
     .delete(consultations)
     .where(eq(consultations.consultation_id, consultationId));
+  
   return (deleted?.rowCount ?? 0) > 0;
+};
+
+// ────────────────────────────────
+// Update consultation by ID with authorization check
+// ────────────────────────────────
+export const updateConsultationService = async (
+  consultationId: number,
+  data: Partial<TConsultationInsert>,
+  userId: number // Pass the logged-in doctor's user ID
+): Promise<TConsultationSelect | null> => {
+  const consultation = await db.query.consultations.findFirst({
+    where: eq(consultations.consultation_id, consultationId),
+    with: {
+      doctor: true,
+    },
+  });
+
+  if (!consultation || consultation.doctor?.user_id !== userId) {
+    throw new Error('Access denied. This consultation does not belong to you.');
+  }
+
+  // Now perform the update
+  const updatedConsultation = await db
+    .update(consultations)
+    .set(data)
+    .where(eq(consultations.consultation_id, consultationId))
+    .returning();
+
+  return updatedConsultation[0] ?? null;
 };
