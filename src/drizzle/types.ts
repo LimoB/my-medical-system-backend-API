@@ -190,13 +190,15 @@ export type SanitizedComplaint = Omit<PopulatedComplaint, 'user'> & {
   user?: SanitizedUser;
 };
 
+
 export type SanitizedPopulatedComplaint = Omit<
   PopulatedComplaint,
   'user' | 'related_appointment'
 > & {
   user?: SanitizedUser;
-  related_appointment?: TAppointmentSelect;
+  appointment?: TAppointmentSelect;
 };
+
 
 export type SanitizedDoctorMeeting = Omit<PopulatedDoctorMeeting, 'attendees'> & {
   attendees?: Array<Omit<NonNullable<PopulatedDoctorMeeting['attendees']>[number], 'doctor'> & {

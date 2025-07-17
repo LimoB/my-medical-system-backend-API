@@ -133,7 +133,6 @@ export const checkoutSchema = z.object({
 // COMPLAINT SCHEMAS
 // ────────────────────────────────
 export const newComplaintSchema = z.object({
-  user_id: z.number().int(),
   related_appointment_id: z.number().int().optional(),
   subject: z.string().min(1),
   description: z.string().min(1),

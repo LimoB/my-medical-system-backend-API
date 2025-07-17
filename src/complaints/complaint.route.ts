@@ -2,6 +2,7 @@ import express from "express";
 import {
   getComplaints,
   getComplaintById,
+  getComplaintsByUserId,
   createComplaint,
   updateComplaintStatus,
   deleteComplaint,
@@ -36,18 +37,15 @@ const complaintsRouter = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - user_id
  *               - subject
  *               - description
  *             properties:
- *               user_id:
- *                 type: number
- *               related_appointment_id:
- *                 type: number
  *               subject:
  *                 type: string
  *               description:
  *                 type: string
+ *               related_appointment_id:
+ *                 type: number
  *     responses:
  *       201:
  *         description: Complaint submitted
@@ -76,6 +74,22 @@ complaintsRouter.post(
  *         description: Forbidden
  */
 complaintsRouter.get("/complaints", adminAuth, getComplaints);
+
+/**
+ * @swagger
+ * /complaints/user:
+ *   get:
+ *     summary: Get complaints by logged-in user (user only)
+ *     tags: [Complaints]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of complaints submitted by user
+ *       403:
+ *         description: Forbidden
+ */
+complaintsRouter.get("/complaints/user", anyRoleAuth, getComplaintsByUserId);
 
 /**
  * @swagger

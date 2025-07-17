@@ -320,22 +320,18 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "user_id",
                   "subject",
                   "description"
                 ],
                 "properties": {
-                  "user_id": {
-                    "type": "number"
-                  },
-                  "related_appointment_id": {
-                    "type": "number"
-                  },
                   "subject": {
                     "type": "string"
                   },
                   "description": {
                     "type": "string"
+                  },
+                  "related_appointment_id": {
+                    "type": "number"
                   }
                 }
               }
@@ -364,6 +360,27 @@
         "responses": {
           "200": {
             "description": "List of complaints"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/complaints/user": {
+      "get": {
+        "summary": "Get complaints by logged-in user (user only)",
+        "tags": [
+          "Complaints"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of complaints submitted by user"
           },
           "403": {
             "description": "Forbidden"
