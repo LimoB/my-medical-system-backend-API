@@ -22,4 +22,5 @@ const config: Config.InitialOptions = {
   restoreMocks: true,
 };
 
-export default config;
+// ✅ CommonJS-style export to avoid TS1286 error
+module.exports = config;
