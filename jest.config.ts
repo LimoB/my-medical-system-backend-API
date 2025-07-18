@@ -1,10 +1,10 @@
 import type { Config } from '@jest/types';
 
 const config: Config.InitialOptions = {
-  preset: 'ts-jest/presets/default-esm', // 👈 use ESM preset
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   verbose: true,
-  testMatch: ['**/__tests__/**/*.test.ts', '**/?(*.)+(spec|test).ts'],
+  testMatch: ['**/?(*.)+(spec|test).[tj]s'], // 🔄 updated pattern
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -13,7 +13,7 @@ const config: Config.InitialOptions = {
   globals: {
     'ts-jest': {
       tsconfig: './tsconfig.json',
-      useESM: true, // 👈 critical flag
+      useESM: true,
     },
   },
   extensionsToTreatAsEsm: ['.ts'],
@@ -22,5 +22,4 @@ const config: Config.InitialOptions = {
   restoreMocks: true,
 };
 
-// ✅ CommonJS-style export to avoid TS1286 error
-module.exports = config;
+export default config;
