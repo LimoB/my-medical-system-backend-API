@@ -1,20 +1,22 @@
 import type { Config } from '@jest/types';
 
 const config: Config.InitialOptions = {
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm', // 👈 use ESM preset
   testEnvironment: 'node',
   verbose: true,
-  testMatch: ['**/__tests__/**/*.test.ts', '**/?(*.)+(spec|test).ts'], // support flexible test file naming
+  testMatch: ['**/__tests__/**/*.test.ts', '**/?(*.)+(spec|test).ts'],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1', // ✅ fix .js import resolution for TS files
-    '^@/(.*)$': '<rootDir>/src/$1', // ✅ optional: support `@/` aliases if using in tsconfig
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'], // ✅ add setup for mocks, if needed
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   globals: {
     'ts-jest': {
-      tsconfig: 'tsconfig.json',
+      tsconfig: './tsconfig.json',
+      useESM: true, // 👈 critical flag
     },
   },
+  extensionsToTreatAsEsm: ['.ts'],
   resetMocks: true,
   clearMocks: true,
   restoreMocks: true,
