@@ -11,7 +11,8 @@
     "migrate": "tsx src/drizzle/migrate.ts",
     "studio": "drizzle-kit studio",
     "push": "drizzle-kit generate && drizzle-kit push",
-    "seed": "tsx src/drizzle/seed.ts"
+    "seed": "tsx src/drizzle/seed.ts",
+    "postinstall": "tsc"
   },
   "keywords": [],
   "author": "Boaz Limo",
