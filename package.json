@@ -11,8 +11,8 @@
     "migrate": "tsx src/drizzle/migrate.ts",
     "studio": "drizzle-kit studio",
     "push": "drizzle-kit generate && drizzle-kit push",
-    "seed": "tsx src/drizzle/seed.ts",
-     "test": "echo \"No tests yet.\""
+    "seed": "tsx src/drizzle/seed.ts"
+
   },
   "keywords": [],
   "author": "",
@@ -36,7 +36,6 @@
     "zod": "^3.25.56"
   },
   "devDependencies": {
-    "@jest/types": "^29.6.3",
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.2",
@@ -46,10 +45,8 @@
     "@types/nodemailer": "^6.4.17",
     "@types/pg": "^8.15.2",
     "@types/stripe": "^8.0.417",
-    "@types/supertest": "^6.0.3",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
-    "supertest": "^7.1.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
