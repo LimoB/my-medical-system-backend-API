@@ -1,10 +1,12 @@
-import { Request, Response } from 'express'
+import type { Request, Response } from 'express'
 import { stripe } from './stripe'
 import db from '@/drizzle/db'
 import { payments, appointments, users } from '@/drizzle/schema'
 import Stripe from 'stripe'
 import { eq } from 'drizzle-orm'
 import { sendHospitalEmail } from '@/middleware/googleMailer' // adjust path if needed
+
+
 
 export const handleStripeWebhook = async (req: Request, res: Response): Promise<void> => {
     const isDev = process.env.NODE_ENV === 'development'
@@ -68,10 +70,12 @@ export const handleStripeWebhook = async (req: Request, res: Response): Promise<
                 amount: amount.toFixed(2),
                 payment_status: 'Paid',
                 transaction_id: transactionId,
+                payment_method: 'stripe', // ✅ Add your method here
                 payment_date: new Date(),
                 created_at: new Date(),
                 updated_at: new Date(),
-            })
+            });
+
 
             // 📅 Update appointment status
             await db.update(appointments).set({

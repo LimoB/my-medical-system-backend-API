@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { getUserByEmailService, saveResetTokenService } from "@/auth/auth.service";
 import { sendHospitalEmail } from "@/middleware/googleMailer";
 import { getForgotPasswordEmail } from "@/emails";

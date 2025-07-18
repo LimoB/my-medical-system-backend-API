@@ -33,7 +33,7 @@ export const users = pgTable('users', {
   password: varchar('password', { length: 255 }).notNull(),
   contact_phone: varchar('contact_phone', { length: 20 }),
   address: text('address'),
-  date_of_birth: date('date_of_birth'), // ✅ New field added
+  date_of_birth: varchar('date_of_birth', { length: 255 }),
   role: roleEnum('role').default('user').notNull(),
   image_url: text('image_url'),
   is_verified: boolean('is_verified').default(false).notNull(),

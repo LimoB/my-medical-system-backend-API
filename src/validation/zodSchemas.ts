@@ -20,14 +20,20 @@ export const newUserSchema = z.object({
   password: z.string().min(6),
   contact_phone: z.string().optional(),
   address: z.string().optional(),
-  date_of_birth: z.coerce.date().optional(), // ✅ Include since it's in schema
+
+  // 🔄 date_of_birth is a string in DB, so treat it as a string
+  date_of_birth: z.string().optional(), // optionally add .regex(...) for format
+
   role: roleEnum.optional().default('user'),
   image_url: z.string().url().optional(),
   is_verified: z.boolean().optional(),
   verification_token: z.string().nullable().optional(),
+
+  // ✅ These are stored as Date or Timestamp
   token_expiry: z.coerce.date().nullable().optional(),
   last_login: z.coerce.date().nullable().optional(),
 });
+
 
 export const updateUserSchema = z
   .object({

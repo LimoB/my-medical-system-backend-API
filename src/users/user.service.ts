@@ -52,7 +52,21 @@ export const createUserService = async (
   user: TUserInsert
 ): Promise<string> => {
   try {
-    const result = await db.insert(users).values(user).returning();
+    const safeUser = {
+      ...user,
+      // keep date_of_birth as string
+      date_of_birth: user.date_of_birth || null,
+
+      // convert only fields that are real Date columns in DB
+      token_expiry: user.token_expiry
+        ? new Date(user.token_expiry)
+        : null,
+      last_login: user.last_login
+        ? new Date(user.last_login)
+        : null,
+    };
+
+    const result = await db.insert(users).values(safeUser).returning();
 
     if (result.length > 0) {
       return 'User created successfully!';
@@ -64,6 +78,7 @@ export const createUserService = async (
     throw new Error('Unable to create user');
   }
 };
+
 
 
 

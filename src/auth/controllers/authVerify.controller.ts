@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { verifyUserEmail } from "@/auth/auth.service";
 import { sendWelcomeEmail } from "@/auth/controllers/authRegister.controller"; // or wherever you put the helper
 

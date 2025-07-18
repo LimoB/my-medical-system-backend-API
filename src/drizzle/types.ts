@@ -199,8 +199,10 @@ export type SanitizedPayment = Omit<PopulatedPayment, 'appointment'> & {
   appointment?: Omit<NonNullable<PopulatedPayment['appointment']>, 'user' | 'doctor'> & {
     user?: SanitizedUser;
     doctor?: TDoctorSelect;
+    doctor_user?: SanitizedUser;
   };
 };
+
 
 export type SanitizedComplaint = Omit<PopulatedComplaint, 'user'> & {
   user?: SanitizedUser;

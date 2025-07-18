@@ -90,7 +90,14 @@ export const createUser = async (
     const validated = newUserSchema.parse(req.body);
     console.log('✅ Validated new user:', validated);
 
-    const message = await createUserService(validated);
+    const userToCreate = {
+      ...validated,
+      date_of_birth: validated.date_of_birth ?? null, // leave as string or null
+      token_expiry: validated.token_expiry ?? undefined,
+      last_login: validated.last_login ?? undefined,
+    };
+
+    const message = await createUserService(userToCreate);
     return res.status(201).json({ message });
   } catch (error) {
     if (error instanceof ZodError) {
@@ -105,6 +112,10 @@ export const createUser = async (
     return next(error);
   }
 };
+
+
+
+
 
 // 🔹 PUT /api/users/:id
 export const updateUser = async (

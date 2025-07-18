@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import {
   getUserByEmailService,
@@ -113,12 +113,16 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       if (finalRole === "doctor") {
         await tx.insert(doctors).values({
           user_id: newUser.user_id,
-          specialization: "",      // Default blank
-          available_days: "",      // Default blank
+          specialization: "",
+          available_days: "",
+          payment_per_hour: 0, // Provide a default or actual value
+          description: "",      // Provide a default or actual value
           created_at: new Date(),
           updated_at: new Date(),
+          available_hours: [],  // optional, can be omitted if not needed
         });
       }
+
 
       return newUser;
     });

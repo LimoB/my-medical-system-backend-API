@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import db from "@/drizzle/db";
 import { users } from "@/drizzle/schema";
-import { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 
 // ────────────────────────────────
