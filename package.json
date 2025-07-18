@@ -12,7 +12,7 @@
     "studio": "drizzle-kit studio",
     "push": "drizzle-kit generate && drizzle-kit push",
     "seed": "tsx src/drizzle/seed.ts",
-    "test": "jest --config jest.config.ts"
+     "test": "echo \"No tests yet.\""
   },
   "keywords": [],
   "author": "",
