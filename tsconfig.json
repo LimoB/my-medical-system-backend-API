@@ -15,7 +15,7 @@
     "strict": true,
 
     // Optional in noEmit mode
-    "types": ["jest"],
+    // "types": ["jest"],
 
     // ✅ Path aliases
     "baseUrl": ".",
