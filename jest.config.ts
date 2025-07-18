@@ -4,7 +4,7 @@ const config: Config.InitialOptions = {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   verbose: true,
-  testMatch: ['**/?(*.)+(spec|test).[tj]s'], // 🔄 updated pattern
+  testMatch: ['**/__tests__/**/*.test.ts', '**/?(*.)+(spec|test).ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/src/$1',
