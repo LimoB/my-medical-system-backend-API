@@ -12,10 +12,9 @@
     "studio": "drizzle-kit studio",
     "push": "drizzle-kit generate && drizzle-kit push",
     "seed": "tsx src/drizzle/seed.ts"
-
   },
   "keywords": [],
-  "author": "",
+  "author": "Boaz Limo",
   "license": "ISC",
   "packageManager": "pnpm@10.10.0",
   "dependencies": {
