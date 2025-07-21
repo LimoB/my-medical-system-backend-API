@@ -8,10 +8,10 @@ import complaintsRouter from "@/complaints/complaint.route";
 import appointmentsRouter from "@/appointments/appointment.route";
 import doctorRouter from "@/doctors/doctor.route";
 import paymentRouter from "@/payments/payment.route";
-import prescriptionRouter from "./prescriptions/prescription.route";
-import dashboardRouter from "./dashboard/dashboard.route";
-import consultationsRouter from "./consultation/consultation.routes";
-import meetingRouter from "./doctors/doctorMeeting.route";
+import prescriptionRouter from "@/prescriptions/prescription.route";
+import dashboardRouter from "@/dashboard/dashboard.route";
+import consultationsRouter from "@/consultation/consultation.routes";
+import meetingRouter from "@/doctors/doctorMeeting.route";
 
 
 

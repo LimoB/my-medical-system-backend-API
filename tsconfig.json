@@ -1,23 +1,21 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "noEmit": false,
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "outDir": "dist",
+    "rootDir": "src",                         // ✅ Add this to make paths compile from src
+    "baseUrl": "src",                         // ✅ Adjust to src since you use @/ as src/*
+    "paths": {
+      "@/*": ["*"]                            // ✅ So @/middleware/logger → src/middleware/logger
+    },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "strict": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "strict": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src"],
   "exclude": ["node_modules", "test"]
 }
