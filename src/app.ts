@@ -20,8 +20,14 @@ const app: Application = express();
 
 // CORS - for frontend access
 app.use(cors({
-  origin: "http://localhost:5173", // Allow frontend origin
-  credentials: true, // Allow cookies or headers if needed
+  origin: ["http://localhost:5173",
+    // Allow frontend origin
+
+    "https://purple-plant-08da99010.2.azurestaticapps.net",// Deployed frontend
+  ],
+  credentials: true,
+  // Allow cookies or headers if needed
+
 }));
 
 
