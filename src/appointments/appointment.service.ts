@@ -5,7 +5,7 @@ import type {
   TAppointmentInsert,
   TAppointmentSelect,
   SanitizedAppointment,
-} from '@/drizzle/types';
+} from '@/types';
 import { sanitizeUser } from '@/utils/sanitize';
 
 // 🔹 Get all appointments (admin use) WITH user and doctor (including doctor.user)

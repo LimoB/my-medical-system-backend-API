@@ -17,12 +17,12 @@ import {
 
 // ===== ENUMS =====
 export const roleEnum = pgEnum('role', ['user', 'admin', 'doctor']);
-export const appointmentStatusEnum = pgEnum('appointment_status', ['Pending', 'Confirmed', 'Cancelled', 'Completed']);
+export const appointmentStatusEnum = pgEnum('appointment_status', ['Pending', 'Confirmed', 'Cancelled', 'Completed', 'Failed']);
 export const complaintStatusEnum = pgEnum('complaint_status', ['Open', 'In Progress', 'Resolved', 'Closed']);
 export const paymentStatusEnum = pgEnum('payment_status', ['Pending', 'Paid', 'Failed']);
 export const paymentMethodEnum = pgEnum('payment_method', ['stripe', 'mpesa', 'paypal', 'cash']);
 export const consultationStatusEnum = pgEnum('consultation_status', ['Pending', 'Completed']);
-export const consultationTypeEnum = pgEnum('consultation_type', ['initial', 'follow-up', 'review']); // Added consultation type enum
+export const consultationTypeEnum = pgEnum('consultation_type', ['initial', 'follow-up', 'review']);
 
 // ===== USERS =====
 export const users = pgTable('users', {
@@ -68,7 +68,10 @@ export const appointments = pgTable('appointments', {
   appointment_status: appointmentStatusEnum('appointment_status').default('Pending').notNull(),
   payment_per_hour: decimal('payment_per_hour', { precision: 10, scale: 2 }).notNull().default(sql`0`),
   payment_method: paymentMethodEnum('payment_method').notNull(),
-  reason: text('reason').default(sql`NULL`),  // Made nullable
+  is_cash_delivered: boolean('is_cash_delivered').default(false),
+  failure_reason: text('failure_reason'),
+  was_rescheduled: boolean('was_rescheduled').default(false), // ✅ added
+  reason: text('reason').default(sql`NULL`),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -76,7 +79,7 @@ export const appointments = pgTable('appointments', {
 // ===== CONSULTATIONS =====
 export const consultations = pgTable('consultations', {
   consultation_id: serial('consultation_id').primaryKey(),
-  appointment_id: integer('appointment_id').references(() => appointments.appointment_id).notNull(),  // Removed unique constraint
+  appointment_id: integer('appointment_id').references(() => appointments.appointment_id).notNull(),
   doctor_id: integer('doctor_id').references(() => doctors.doctor_id).notNull(),
   patient_id: integer('patient_id').references(() => users.user_id).notNull(),
   symptoms: text('symptoms'),
@@ -84,7 +87,7 @@ export const consultations = pgTable('consultations', {
   treatment_plan: text('treatment_plan'),
   additional_notes: text('additional_notes'),
   duration_minutes: integer('duration_minutes'),
-  consultation_type: consultationTypeEnum('consultation_type').default('initial').notNull(),  // Added consultation type
+  consultation_type: consultationTypeEnum('consultation_type').default('initial').notNull(),
   status: consultationStatusEnum('status').default('Completed').notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
@@ -134,7 +137,7 @@ export const doctorMeetings = pgTable('doctor_meetings', {
   description: text('description'),
   meeting_date: date('meeting_date').notNull(),
   meeting_time: time('meeting_time').notNull(),
-  is_global: boolean('is_global').default(false).notNull(), // Added field to track global meetings
+  is_global: boolean('is_global').default(false).notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -148,5 +151,23 @@ export const doctorMeetingAttendance = pgTable('doctor_meeting_attendance', {
   attended: boolean('attended').default(false),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
-  uniqueDoctorMeeting: unique().on(table.doctor_id, table.meeting_id),  // Ensure unique attendance
+  uniqueDoctorMeeting: unique().on(table.doctor_id, table.meeting_id),
 }));
+
+// ===== NOTIFICATIONS =====
+export const notifications = pgTable('notifications', {
+  id: serial('id').primaryKey(),
+  user_id: integer('user_id').references(() => users.user_id).notNull(),
+  message: text('message').notNull(),
+  sent_at: timestamp('sent_at', { withTimezone: true }).defaultNow(),
+  read: boolean('read').default(false),
+});
+
+// ===== RESCHEDULE REQUESTS =====
+export const rescheduleRequests = pgTable('reschedule_requests', {
+  id: serial('id').primaryKey(),
+  appointment_id: integer('appointment_id').references(() => appointments.appointment_id).notNull(),
+  requested_date: date('requested_date').notNull(),
+  requested_time: time('requested_time').notNull(),
+  status: varchar('status', { length: 20 }).default('Pending'),
+});

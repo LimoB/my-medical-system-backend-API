@@ -3,9 +3,12 @@ import db from '@/drizzle/db'
 import { payments } from '@/drizzle/schema'
 import type {
   TPaymentInsert,
-  SanitizedPayment,
-} from '@/drizzle/types'
-import { sanitizeUser } from '@/utils/sanitize'
+  
+} from '@/types'
+
+import type { SanitizedPayment } from '@/utils/sanitize';
+
+import { sanitizeUser, } from '@/utils/sanitize'
 
 // 🔹 Get all payments with appointment + doctor & user (sanitized)
 export const getPaymentsService = async (): Promise<SanitizedPayment[]> => {

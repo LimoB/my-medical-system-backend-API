@@ -5,7 +5,7 @@ import type {
   TConsultationInsert,
   TConsultationSelect,
   SanitizedConsultation,
-} from '@/drizzle/types';
+} from '@/types';
 import { sanitizeUser } from '@/utils/sanitize';
 import { sanitizeDoctor } from '@/utils/sanitize'; // Assuming sanitizeDoctor function exists
 

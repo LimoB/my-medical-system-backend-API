@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import db from '@/drizzle/db';
 import { users } from '@/drizzle/schema';
-import type { TUserInsert, PopulatedUser } from '@/drizzle/types';
+import type { TUserInsert, PopulatedUser } from '@/types';
 import { sanitizeUser, sanitizeUsers } from '@/utils/sanitize';
 
 type SanitizedUser = Omit<PopulatedUser, 'password' | 'verification_token' | 'token_expiry'>;

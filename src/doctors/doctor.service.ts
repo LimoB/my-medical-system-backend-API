@@ -2,7 +2,7 @@ import { desc, isNull } from 'drizzle-orm';
 import db from '@/drizzle/db';
 import { eq, and } from 'drizzle-orm';
 import { users, doctors, appointments } from '@/drizzle/schema';
-import type { TDoctorInsert, SanitizedDoctor, DoctorPatient } from '@/drizzle/types';
+import type { TDoctorInsert, SanitizedDoctor, DoctorPatient } from '@/types';
 import { sanitizeUser } from '@/utils/sanitize';
 import * as schema from '@/drizzle/schema';
 

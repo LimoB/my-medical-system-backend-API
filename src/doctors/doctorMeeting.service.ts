@@ -10,12 +10,13 @@ import type {
     TDoctorMeetingSelect,
     TDoctorMeetingAttendanceSelect,
     SanitizedDoctorMeeting,
-} from '@/drizzle/types';
+} from '@/types';
 import { sanitizeUser } from '@/utils/sanitize';
 
 // ────────────────────────────────
 // 🧼 Utility to sanitize meeting
 // ────────────────────────────────
+
 const sanitizeMeeting = async (
     meeting: TDoctorMeetingSelect
 ): Promise<SanitizedDoctorMeeting> => {

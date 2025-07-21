@@ -57,3 +57,41 @@ export const sanitizeDoctors = <T extends SensitiveDoctorFields>(
 ): Omit<T, 'password' | 'verification_token' | 'token_expiry'>[] => {
   return doctors.map(sanitizeDoctor);
 };
+
+
+
+// 🔹 Define the base interface for sensitive payment fields
+interface SensitivePaymentFields {
+  user?: SensitiveUserFields;
+  doctor?: SensitiveDoctorFields;
+  [key: string]: any;
+}
+
+// 🔹 Define the sanitized payment shape
+type Sanitized<T extends SensitivePaymentFields> = Omit<T, 'user' | 'doctor'> & {
+  user?: ReturnType<typeof sanitizeUser>;
+  doctor?: ReturnType<typeof sanitizeDoctor>;
+};
+
+// 🔹 Sanitize a single payment object
+export const sanitizePayment = <T extends SensitivePaymentFields>(
+  payment: T
+): Sanitized<T> => {
+  const { user, doctor, ...rest } = payment;
+
+  return {
+    ...rest,
+    user: user ? sanitizeUser(user) : undefined,
+    doctor: doctor ? sanitizeDoctor(doctor) : undefined,
+  };
+};
+
+// 🔹 Sanitize an array of payment objects
+export const sanitizePayments = <T extends SensitivePaymentFields>(
+  payments: T[]
+): Sanitized<T>[] => {
+  return payments.map(sanitizePayment);
+};
+
+// 🔹 Export the type of a sanitized payment object
+export type SanitizedPayment<T extends SensitivePaymentFields = SensitivePaymentFields> = Sanitized<T>;

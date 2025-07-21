@@ -1,6 +1,6 @@
-import type { PopulatedPrescription } from '@/drizzle/types'; // adjust path
-import { sanitizeUser, sanitizeDoctor } from './sanitize'; // adjust path
-import type { SanitizedPrescription } from '@/drizzle/types'; // adjust path
+import type { PopulatedPrescription } from '@/types'; // adjust path
+import { sanitizeUser, sanitizeDoctor, sanitizePayment } from './sanitize'; // adjust path
+import type { SanitizedPrescription } from '@/types'; // adjust path
 
 export const sanitizePrescription = (
   prescription: PopulatedPrescription

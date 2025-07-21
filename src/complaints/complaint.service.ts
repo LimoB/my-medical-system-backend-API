@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import type {
   TComplaintInsert,
   SanitizedPopulatedComplaint,
-} from '@/drizzle/types';
+} from '@/types';
 import { sanitizeUser } from '@/utils/sanitize';
 
 // 🔹 Get all complaints WITH sanitized user and appointment

@@ -127,6 +127,13 @@
       "when": 1752843570350,
       "tag": "0017_white_the_call",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1753102022634,
+      "tag": "0018_sour_monster_badoon",
+      "breakpoints": true
     }
   ]
 }

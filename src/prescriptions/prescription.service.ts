@@ -5,7 +5,7 @@ import type {
   TPrescriptionInsert,
   PopulatedPrescription,
   SanitizedPrescription,
-} from '@/drizzle/types';
+} from '@/types';
 import { sanitizeUser } from '@/utils/sanitize';
 
 // 🔹 Get all prescriptions with sanitized patient/doctor
@@ -47,6 +47,9 @@ export const getPrescriptionsService = async (): Promise<SanitizedPrescription[]
     throw new Error('Unable to fetch prescriptions');
   }
 };
+
+
+
 
 // 🔹 Get a single prescription by ID with sanitized fields
 export const getPrescriptionByIdService = async (
