@@ -6,13 +6,11 @@ import Stripe from 'stripe'
 import { eq } from 'drizzle-orm'
 import { sendHospitalEmail } from '@/middleware/googleMailer' // adjust path if needed
 
-
-
 export const handleStripeWebhook = async (req: Request, res: Response): Promise<void> => {
     const isDev = process.env.NODE_ENV === 'development'
     let event: Stripe.Event
 
-    // 🌐 Webhook verification
+    // Webhook verification: bypass signature check in dev, verify in prod
     if (isDev) {
         event = req.body as Stripe.Event
         console.log('[DEV Webhook] 🔧 Bypassing Stripe signature check.')
@@ -39,51 +37,50 @@ export const handleStripeWebhook = async (req: Request, res: Response): Promise<
 
     console.log(`[Webhook] ✅ Received event: ${event.type}`)
 
-    // 💳 Handle successful checkout
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session
         console.log('[Webhook] 🔍 Session payload:', JSON.stringify(session, null, 2))
 
         try {
+            // Validate required metadata
             const appointmentId = parseInt(session.metadata?.appointment_id || '')
             const transactionId = session.id
             const amount = (session.amount_total || 0) / 100
 
             if (!appointmentId || !transactionId) {
-                throw new Error('Missing appointment_id or session.id')
+                throw new Error('Missing appointment_id or session.id in Stripe session metadata')
             }
 
-            // 🔁 Prevent duplicate insert
-            const existing = await db.query.payments.findFirst({
+            // Check for duplicate payments
+            const existingPayment = await db.query.payments.findFirst({
                 where: eq(payments.transaction_id, transactionId),
             })
 
-            if (existing) {
+            if (existingPayment) {
                 console.log(`[Webhook] ⚠️ Duplicate transaction ID (${transactionId}), skipping insert.`)
                 res.status(200).json({ received: true, duplicate: true })
                 return
             }
 
-            // 🧾 Insert payment record
+            // Insert payment record
             await db.insert(payments).values({
                 appointment_id: appointmentId,
                 amount: amount.toFixed(2),
                 payment_status: 'Paid',
                 transaction_id: transactionId,
-                payment_method: 'stripe', // ✅ Add your method here
+                payment_method: 'stripe',
                 payment_date: new Date(),
                 created_at: new Date(),
                 updated_at: new Date(),
-            });
+            })
 
-
-            // 📅 Update appointment status
+            // Update appointment status to Confirmed
             await db.update(appointments).set({
                 appointment_status: 'Confirmed',
                 updated_at: new Date(),
             }).where(eq(appointments.appointment_id, appointmentId))
 
-            // 📧 Send email to user (lookup from appointment → user)
+            // Fetch user details for email
             const appointment = await db.query.appointments.findFirst({
                 where: eq(appointments.appointment_id, appointmentId),
                 with: {
@@ -110,9 +107,8 @@ export const handleStripeWebhook = async (req: Request, res: Response): Promise<
             }
 
             console.log('[Webhook] ✅ Payment recorded, appointment confirmed, email sent.')
-
         } catch (err) {
-            console.error('[Webhook] ❌ Failed to process session.completed event:', err)
+            console.error('[Webhook] ❌ Failed to process checkout.session.completed event:', err)
             res.status(500).json({ error: 'Webhook processing failed' })
             return
         }
@@ -120,6 +116,6 @@ export const handleStripeWebhook = async (req: Request, res: Response): Promise<
         console.log(`[Webhook] ⚠️ Unhandled event type: ${event.type}`)
     }
 
-    // 📬 Always acknowledge receipt to Stripe
+    // Always respond to Stripe to avoid retries
     res.status(200).json({ received: true })
 }

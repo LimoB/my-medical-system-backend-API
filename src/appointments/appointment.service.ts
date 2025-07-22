@@ -1,6 +1,6 @@
 import db from '@/drizzle/db';
 import { appointments, users, doctors } from '@/drizzle/schema';
-import { eq, desc, inArray } from 'drizzle-orm';
+import { eq, desc, inArray, and } from 'drizzle-orm';
 import type {
   TAppointmentInsert,
   TAppointmentSelect,
@@ -139,11 +139,20 @@ export const getAppointmentByIdService = async (
   };
 };
 
+
 // 🔹 Create new appointment
 export const createAppointmentService = async (
   data: TAppointmentInsert
 ): Promise<TAppointmentSelect> => {
-  const { doctor_id, appointment_date, time_slot, payment_method } = data;
+  const {
+    doctor_id,
+    appointment_date,
+    time_slot,
+    payment_method,
+    user_id,
+    total_amount,
+    reason,
+  } = data;
 
   const doctor = await db.query.doctors.findFirst({
     where: eq(doctors.doctor_id, doctor_id),
@@ -155,18 +164,44 @@ export const createAppointmentService = async (
   const isSlotAvailable = availableHours.includes(time_slot);
 
   if (!isSlotAvailable) {
-    throw new Error('This time slot is not available');
+    throw new Error('This time slot is not in the doctor\'s available hours');
   }
 
-  // Optional logging
+  const existingAppointment = await db.query.appointments.findFirst({
+    where: and(
+      eq(appointments.doctor_id, doctor_id),
+      eq(appointments.appointment_date, appointment_date),
+      eq(appointments.time_slot, time_slot)
+    ),
+  });
+
+  if (existingAppointment) {
+    throw new Error("This time slot is already booked");
+  }
+
   console.log(`Creating appointment with payment method: ${payment_method}`);
 
-  const [inserted] = await db.insert(appointments).values(data).returning();
+  const [inserted] = await db.insert(appointments).values({
+    doctor_id,
+    appointment_date,
+    time_slot,
+    payment_method,
+    user_id,
+    total_amount,
+    reason,
+    appointment_status: 'Pending',       // ✅ default status
+    is_cash_delivered: false,            // ✅ default value
+    failure_reason: null,                // ✅ default value
+    was_rescheduled: false,              // ✅ default value
+    created_at: new Date(),
+    updated_at: new Date(),
+  }).returning();
 
-  await updateDoctorAvailability(doctor_id, appointment_date, time_slot);
+  await updateDoctorAvailability(doctor_id, appointment_date, time_slot); // optional
 
   return inserted;
 };
+
 
 
 // 🔹 Update doctor's availability after appointment

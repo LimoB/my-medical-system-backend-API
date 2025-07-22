@@ -24,6 +24,9 @@ export const paymentMethodEnum = pgEnum('payment_method', ['stripe', 'mpesa', 'p
 export const consultationStatusEnum = pgEnum('consultation_status', ['Pending', 'Completed']);
 export const consultationTypeEnum = pgEnum('consultation_type', ['initial', 'follow-up', 'review']);
 
+
+
+
 // ===== USERS =====
 export const users = pgTable('users', {
   user_id: serial('user_id').primaryKey(),

@@ -143,7 +143,10 @@ export const getAppointmentsByUser = async (
 };
 
 // 🔹 POST /api/appointments - Authenticated users (user or doctor)
-// 🔹 POST /api/appointments - Authenticated users (user or doctor)
+import { createPaymentService } from '@/payments/payment.service';
+import { nanoid } from 'nanoid'; // for generating unique transaction IDs
+
+
 export const createAppointment = async (
   req: Request,
   res: Response,
@@ -158,6 +161,7 @@ export const createAppointment = async (
     'appointment_date',
     'time_slot',
     'payment_method',
+    'total_amount',
   ];
 
   const missingFields = requiredFields.filter((field) => !appointmentData[field]);
@@ -168,14 +172,32 @@ export const createAppointment = async (
   }
 
   try {
+    // Step 1: Create the appointment
     const appointment = await createAppointmentService(appointmentData);
-    res.status(201).json(appointment);
+
+    // Step 2: Insert payment record
+    const paymentInsert = {
+      appointment_id: appointment.appointment_id,
+      amount: appointment.total_amount ?? "0", // ✅ handled null
+      payment_method: appointment.payment_method,
+      transaction_id: `txn_${nanoid()}`,
+      payment_status: "Paid" as "Pending" | "Paid" | "Failed",
+    };
+
+
+
+    await createPaymentService(paymentInsert);
+
+    // Step 3: Return combined response
+    res.status(201).json({
+      message: 'Appointment and payment successfully created',
+      appointment,
+    });
   } catch (error) {
-    console.error('Error in createAppointmentController:', error);
-    next(error);
+    console.error('Error in createAppointment:', error);
+    res.status(500).json({ error: 'Booking failed. Please try again.' });
   }
 };
-
 
 
 
