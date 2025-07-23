@@ -20,14 +20,12 @@ const app: Application = express();
 
 // CORS - for frontend access
 app.use(cors({
-  origin: ["http://localhost:5173",
-    // Allow frontend origin
-
-    "https://purple-plant-08da99010.2.azurestaticapps.net",// Deployed frontend
+  origin: [
+    "http://localhost:5173", // local dev
+    "https://purple-plant-08da99010.2.azurestaticapps.net", // old frontend (optional if still used)
+    "https://harmonyhealthclinic.netlify.app", // ✅ Netlify frontend
   ],
-  credentials: true,
-  // Allow cookies or headers if needed
-
+  credentials: true, // If you use cookies or auth headers
 }));
 
 
