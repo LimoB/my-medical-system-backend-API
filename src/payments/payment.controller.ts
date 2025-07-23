@@ -5,6 +5,7 @@ import {
   createPaymentService,
   updatePaymentService,
   deletePaymentService,
+  getPaymentsByUserIdService,
 } from '@/payments/payment.service'
 
 // 🔹 GET /api/payments - Admin and doctor only
@@ -141,3 +142,40 @@ export const deletePayment = async (
     next(error)
   }
 }
+
+
+
+// 🔹 GET /api/payments/user/:userId - For users to fetch their own payments, or admin
+
+export const getPaymentsByUserId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const requestedUserId = parseInt(req.params.userId, 10);
+  const loggedInUserId = req.user?.userId;
+  const role = req.user?.role;
+
+  // Validate user ID
+  if (isNaN(requestedUserId)) {
+    res.status(400).json({ error: 'Invalid user ID' });
+    return;
+  }
+
+  // Check access control
+  const isAdmin = role === 'admin';
+  const isSelf = requestedUserId === loggedInUserId;
+
+  if (!isAdmin && !isSelf) {
+    res.status(403).json({ error: 'Access denied' });
+    return;
+  }
+
+  try {
+    const payments = await getPaymentsByUserIdService(requestedUserId);
+    res.status(200).json({ payments });
+  } catch (error) {
+    console.error(`❌ Error in getPaymentsByUserId:`, error);
+    res.status(500).json({ error: 'Failed to fetch payments' });
+  }
+};

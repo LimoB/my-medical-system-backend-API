@@ -5,6 +5,7 @@ import {
   createPayment,
   updatePayment,
   deletePayment,
+  getPaymentsByUserId,
 } from '@/payments/payment.controller'
 
 import { adminAuth, anyRoleAuth } from '@/middleware/bearAuth'
@@ -60,6 +61,11 @@ paymentRouter.get('/payments', adminAuth, getPayments)
  *         description: Payment not found
  */
 paymentRouter.get('/payments/:id', anyRoleAuth, getPaymentById)
+
+
+// 🔹 GET /payments/user/:userId — fetch all payments for that user
+paymentRouter.get('/payments/user/:userId', anyRoleAuth, getPaymentsByUserId);
+
 
 /**
  * @swagger

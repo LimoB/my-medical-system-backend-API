@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import db from '@/drizzle/db'
-import { payments } from '@/drizzle/schema'
+import { appointments, payments, doctors, users } from '@/drizzle/schema';
 import type {
   TPaymentInsert,
   
@@ -143,3 +143,77 @@ export const deletePaymentService = async (
     throw new Error('Unable to delete payment')
   }
 }
+
+
+
+// 🔹 Get payments by user ID (for logged-in patients to view their history)
+import {
+ 
+  users as usersTable,
+  
+} from '@/drizzle/schema';
+import { alias } from 'drizzle-orm/pg-core';
+
+//  Helper to sanitize payment results deeply
+const sanitizePaymentDeep = (payment: any): SanitizedPayment => ({
+  ...payment,
+  appointment: payment.appointment
+    ? {
+        ...payment.appointment,
+        user: payment.appointment.user ? sanitizeUser(payment.appointment.user) : undefined,
+        doctor: payment.appointment.doctor ?? undefined,
+        doctor_user: payment.appointment.doctor_user
+          ? sanitizeUser(payment.appointment.doctor_user)
+          : undefined,
+      }
+    : undefined,
+});
+
+export const getPaymentsByUserIdService = async (
+  userId: number,
+  limit = 50,
+  offset = 0
+): Promise<SanitizedPayment[]> => {
+  const doctorUserAlias = alias(users, 'doctor_user');
+
+  try {
+    console.time('🔍 getPaymentsByUserIdService');
+    const result = await db
+      .select({
+        payment: payments,
+        appointment: appointments,
+        patient: users,
+        doctor: doctors,
+        doctor_user: doctorUserAlias,
+      })
+      .from(payments)
+      .leftJoin(appointments, eq(payments.appointment_id, appointments.appointment_id))
+      .leftJoin(users, eq(appointments.user_id, users.user_id))
+      .leftJoin(doctors, eq(appointments.doctor_id, doctors.doctor_id))
+      .leftJoin(doctorUserAlias, eq(doctors.user_id, doctorUserAlias.user_id))
+      .where(eq(appointments.user_id, userId))
+      .limit(limit)
+      .offset(offset);
+
+    console.timeEnd('🔍 getPaymentsByUserIdService');
+
+    if (!result.length) return [];
+
+    return result.map(({ payment, appointment, patient, doctor, doctor_user }) =>
+      sanitizePaymentDeep({
+        ...payment,
+        appointment: appointment
+          ? {
+              ...appointment,
+              user: patient ?? undefined,
+              doctor: doctor ?? undefined,
+              doctor_user: doctor_user ?? undefined,
+            }
+          : undefined,
+      })
+    );
+  } catch (error) {
+    console.error(`❌ Error fetching payments for user ID ${userId}:`, error);
+    throw new Error('Unable to fetch user payments');
+  }
+};

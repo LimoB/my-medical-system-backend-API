@@ -14,15 +14,15 @@ import {
 } from './schema';
 
 // ===== USERS RELATIONS =====
-export const usersRelations = relations(users, ({ many, one }) => ({
-  appointments: many(appointments),
-  prescriptions: many(prescriptions),
-  complaints: many(complaints),
-  consultations: many(consultations),
+export const usersRelations = relations(users, ({ one, many }) => ({
   doctor: one(doctors, {
     fields: [users.user_id],
     references: [doctors.user_id],
   }),
+  appointments: many(appointments),
+  prescriptions: many(prescriptions),
+  complaints: many(complaints),
+  consultations: many(consultations),
   notifications: many(notifications),
 }));
 
