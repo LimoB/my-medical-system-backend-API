@@ -210,6 +210,42 @@ doctorRouter.delete(
 
 
 
+import { getDoctorAvailability } from './getDoctorAvailability.controller'; // ⬅️ add this import
+
+// 🔹 Route: Get doctor's available time slots on a specific date
+/**
+ * @swagger
+ * /doctors/{id}/availability:
+ *   get:
+ *     summary: Get available time slots for a doctor on a given date
+ *     tags: [Doctors]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: Doctor ID
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date in YYYY-MM-DD format
+ *     responses:
+ *       200:
+ *         description: Available time slots for the given date
+ *       400:
+ *         description: Invalid doctor ID or date format
+ *       404:
+ *         description: Doctor not found
+ */
+doctorRouter.get('/doctors/:id/availability', getDoctorAvailability);
+
+
+
+
 
 export default doctorRouter;
 

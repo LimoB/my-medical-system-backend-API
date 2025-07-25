@@ -144,8 +144,7 @@ export const getAppointmentsByUser = async (
 
 // 🔹 POST /api/appointments - Authenticated users (user or doctor)
 import { createPaymentService } from '@/payments/payment.service';
-import { nanoid } from 'nanoid'; // for generating unique transaction IDs
-
+import { nanoid } from 'nanoid';
 
 export const createAppointment = async (
   req: Request,
@@ -172,23 +171,20 @@ export const createAppointment = async (
   }
 
   try {
-    // Step 1: Create the appointment
+    // ✅ Step 1: Create the appointment
     const appointment = await createAppointmentService(appointmentData);
 
-    // Step 2: Insert payment record
+    // ✅ Step 2: Create the payment
     const paymentInsert = {
       appointment_id: appointment.appointment_id,
-      amount: appointment.total_amount ?? "0", // ✅ handled null
+      amount: appointment.total_amount ?? "0",
       payment_method: appointment.payment_method,
       transaction_id: `txn_${nanoid()}`,
       payment_status: "Paid" as "Pending" | "Paid" | "Failed",
     };
 
-
-
     await createPaymentService(paymentInsert);
 
-    // Step 3: Return combined response
     res.status(201).json({
       message: 'Appointment and payment successfully created',
       appointment,
@@ -198,7 +194,6 @@ export const createAppointment = async (
     res.status(500).json({ error: 'Booking failed. Please try again.' });
   }
 };
-
 
 
 // 🔹 PUT /api/appointments/:id/status - Admin or assigned doctor

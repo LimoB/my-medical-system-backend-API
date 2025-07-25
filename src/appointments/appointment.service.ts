@@ -139,7 +139,6 @@ export const getAppointmentByIdService = async (
   };
 };
 
-
 // 🔹 Create new appointment
 export const createAppointmentService = async (
   data: TAppointmentInsert
@@ -151,22 +150,28 @@ export const createAppointmentService = async (
     payment_method,
     user_id,
     total_amount,
-    reason,
+    reason, // You can remove this line if reason is no longer needed
   } = data;
 
+  // 1. Fetch doctor and ensure they exist
   const doctor = await db.query.doctors.findFirst({
     where: eq(doctors.doctor_id, doctor_id),
   });
 
-  if (!doctor) throw new Error('Doctor not found');
+  if (!doctor) {
+    throw new Error('Doctor not found');
+  }
 
   const availableHours: string[] = doctor.available_hours as string[];
+
+  // 2. Check if the selected time slot is among the doctor's available working hours
   const isSlotAvailable = availableHours.includes(time_slot);
 
   if (!isSlotAvailable) {
     throw new Error('This time slot is not in the doctor\'s available hours');
   }
 
+  // 3. Check if this time slot is already booked by someone else for this doctor and date
   const existingAppointment = await db.query.appointments.findFirst({
     where: and(
       eq(appointments.doctor_id, doctor_id),
@@ -176,11 +181,10 @@ export const createAppointmentService = async (
   });
 
   if (existingAppointment) {
-    throw new Error("This time slot is already booked");
+    throw new Error('This time slot is already booked');
   }
 
-  console.log(`Creating appointment with payment method: ${payment_method}`);
-
+  // 4. Create the appointment
   const [inserted] = await db.insert(appointments).values({
     doctor_id,
     appointment_date,
@@ -188,16 +192,16 @@ export const createAppointmentService = async (
     payment_method,
     user_id,
     total_amount,
-    reason,
-    appointment_status: 'Pending',       // ✅ default status
-    is_cash_delivered: false,            // ✅ default value
-    failure_reason: null,                // ✅ default value
-    was_rescheduled: false,              // ✅ default value
+    reason, // Optional - remove if not used
+    appointment_status: 'Pending',
+    is_cash_delivered: false,
+    failure_reason: null,
+    was_rescheduled: false,
     created_at: new Date(),
     updated_at: new Date(),
   }).returning();
 
-  await updateDoctorAvailability(doctor_id, appointment_date, time_slot); // optional
+  // ✅ Do NOT mutate doctor.available_hours
 
   return inserted;
 };
@@ -205,30 +209,30 @@ export const createAppointmentService = async (
 
 
 // 🔹 Update doctor's availability after appointment
-export const updateDoctorAvailability = async (
-  doctorId: number,
-  appointmentDate: string,
-  timeSlot: string
-) => {
-  const doctor = await db.query.doctors.findFirst({
-    where: eq(doctors.doctor_id, doctorId),
-  });
+// export const updateDoctorAvailability = async (
+//   doctorId: number,
+//   appointmentDate: string,
+//   timeSlot: string
+// ) => {
+//   const doctor = await db.query.doctors.findFirst({
+//     where: eq(doctors.doctor_id, doctorId),
+//   });
 
-  if (!doctor) {
-    throw new Error('Doctor not found');
-  }
+//   if (!doctor) {
+//     throw new Error('Doctor not found');
+//   }
 
-  const availableHours: string[] = doctor.available_hours as string[];
-  const updatedAvailableHours = availableHours.filter(
-    (slot: string) => slot !== timeSlot // Remove the booked time slot
-  );
+//   const availableHours: string[] = doctor.available_hours as string[];
+//   const updatedAvailableHours = availableHours.filter(
+//     (slot: string) => slot !== timeSlot // Remove the booked time slot
+//   );
 
-  await db.update(doctors)
-    .set({
-      available_hours: updatedAvailableHours,
-    })
-    .where(eq(doctors.doctor_id, doctorId));
-};
+//   await db.update(doctors)
+//     .set({
+//       available_hours: updatedAvailableHours,
+//     })
+//     .where(eq(doctors.doctor_id, doctorId));
+// };
 
 // 🔹 Update appointment status
 export const updateAppointmentStatusService = async (
