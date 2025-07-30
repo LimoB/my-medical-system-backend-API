@@ -13,7 +13,7 @@ import { createCheckoutSession } from './pay.controller'
 import { handleStripeWebhook } from './webhook.controller'
 
 import validate from '@/middleware/validate'
-import { newPaymentSchema, checkoutSchema } from '@/validation/zodSchemas'
+import { newPaymentSchema, } from '@/validation/zodSchemas'//checkoutSchema
 
 const paymentRouter = express.Router()
 

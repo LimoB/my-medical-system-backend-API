@@ -131,9 +131,9 @@ export const newPaymentSchema = z.object({
   payment_status: paymentStatusEnum.optional().default('Pending'),
 });
 
-export const checkoutSchema = z.object({
-  appointmentId: z.number().int().positive(),
-});
+// export const checkoutSchema = z.object({
+//   appointmentId: z.number().int().positive(),
+// });
 
 // ────────────────────────────────
 // COMPLAINT SCHEMAS

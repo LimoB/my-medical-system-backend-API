@@ -213,7 +213,10 @@ export const createAppointment = async (
 };
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4321b48 (cash fix)
 // 🔹 PUT /api/appointments/:id/status - Admin or assigned doctor
 // 🔹 PUT /api/appointments/:id/status - Admin or assigned doctor
 
