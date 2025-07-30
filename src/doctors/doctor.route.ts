@@ -36,12 +36,7 @@ doctorRouter.post(
 // Update doctor info (admin only)
 doctorRouter.put(
   '/doctors/:id',
-<<<<<<< HEAD
   // adminAuth,
-=======
-
- 
->>>>>>> 4321b48 (cash fix)
   validate({ body: newDoctorSchema.partial() }),
   updateDoctor
 );
