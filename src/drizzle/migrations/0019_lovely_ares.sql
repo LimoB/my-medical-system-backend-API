@@ -1,0 +1,1 @@
+ALTER TABLE "doctors" ADD COLUMN "slot_duration_minutes" integer DEFAULT 60 NOT NULL;

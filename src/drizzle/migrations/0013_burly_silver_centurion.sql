@@ -1,0 +1,1 @@
+ALTER TABLE "appointments" ADD COLUMN "payment_method" "payment_method" NOT NULL;
